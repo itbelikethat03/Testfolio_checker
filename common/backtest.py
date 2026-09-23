@@ -239,13 +239,14 @@ def main(argv=None):
     legs = {}
     for name, w, is_funded in spec:
         if name == "CASH" and w < 0 and fin.over_fed_funds:
-            # a loan: fed funds (common/leverage.py) + the preset's spread
-            r = leverage.benchmark_on(cal, assets.bill_on(cal), "bill_3m")
+            # a loan: rate_beta x fed funds + spread (common/leverage.py)
+            r = leverage.borrow_on(cal, assets.bill_on(cal), "bill_3m", fin)
         elif name == "CASH":
             r = assets.bill_on(cal)
         else:
             r = on_calendar(assets.load(name), cal)
-        sp = fin.spread if (name == "CASH" and w < 0) else 0.0
+        # borrow_on already includes the spread for fed-funds presets
+        sp = fin.spread if (name == "CASH" and w < 0 and not fin.over_fed_funds) else 0.0
         legs[name.lower() if name == "CASH" else name] = Leg(r, w, is_funded, sp)
     rf = assets.bill_on(cal)
     res = backtest(legs, rebalance=a.rebal, band=a.band, ter=a.ter + fin.ter)

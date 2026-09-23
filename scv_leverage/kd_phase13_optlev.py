@@ -112,21 +112,21 @@ def main():
         total = frame[meta["total"]].to_numpy(float)
         x_all = frame[meta["exc"]].to_numpy(float)
         rf_all = frame["rf"].to_numpy(float)
-        gap_all = frame["gap"].to_numpy(float)
+        # Per-day cost of each borrowed unit over rf, per preset: fed-funds gap,
+        # (rate_beta - 1) x fed funds, plus spread (common/leverage.py).
+        prem_all = {fn: np.broadcast_to(np.asarray(LV.PRESETS[fn].borrow_premium(
+            1.0 / apy, frame["gap"].to_numpy(float), frame["ff_acc"].to_numpy(float)), float),
+            (len(frame),)).copy() for fn in ["frictionless"] + COST_PRESETS}
         order_best = np.argsort(-total, kind="stable")
         print(f"  [{key}] n={len(frame):,}  apy={apy:.2f}  horizon={H:,} days")
-
-        def borrow_rate(fin, gap):
-            """Per-day cost of each borrowed unit: gap to fed funds + spread."""
-            return (gap if fin.over_fed_funds else 0.0) + fin.spread / apy
 
         for X in X_VALUES:
             keep = np.ones(len(frame), bool)
             keep[order_best[:X]] = False
-            x_red, rf_red, gap_red = x_all[keep], rf_all[keep], gap_all[keep]
+            x_red, rf_red = x_all[keep], rf_all[keep]
             fins = ["frictionless"] + (COST_PRESETS if X in COST_X else [])
-            fk = {fn: kelly_emp(x_red, rf_red, spread=borrow_rate(LV.PRESETS[fn], gap_red))
-                  for fn in fins}
+            prem_red = {fn: prem_all[fn][keep] for fn in fins}
+            fk = {fn: kelly_emp(x_red, rf_red, spread=prem_red[fn]) for fn in fins}
 
             acc = {fn: {f: dict(tw=np.empty(N_SIMS), dd=np.empty(N_SIMS)) for f in F_GRID}
                    for fn in fins}
@@ -136,7 +136,8 @@ def main():
                 idx = block_idx(len(x_red), hi - lo, H, BLOCK, rng)
                 xb = x_red[idx].astype(np.float32)
                 rb = rf_red[idx].astype(np.float32)
-                gb = gap_red[idx].astype(np.float32) if len(fins) > 1 else None
+                pb = {fn: prem_red[fn][idx].astype(np.float32) for fn in fins
+                      if fn != "frictionless"}
                 for f in F_GRID:
                     base = 1.0 + rb + np.float32(f) * xb
                     for fn in fins:
@@ -144,7 +145,7 @@ def main():
                         if fn == "frictionless":
                             fac = np.maximum(base, 0.0)
                         else:
-                            drag = (np.float32(max(f - 1.0, 0.0)) * borrow_rate(fin, gb)
+                            drag = (np.float32(max(f - 1.0, 0.0)) * pb[fn]
                                     + np.float32(fin.ter / apy))
                             fac = np.maximum(base - drag, 0.0)
                         nav = np.cumprod(fac, axis=1, dtype=np.float64)
@@ -153,7 +154,7 @@ def main():
                                                    - 1).min(axis=1)
                         del fac, nav
                     del base
-                del xb, rb, gb, idx
+                del xb, rb, pb, idx
 
             for fn in fins:
                 rows += sweep_rows(acc[fn], key, X, fn, fk[fn])

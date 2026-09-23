@@ -247,6 +247,7 @@ for key, meta in SERIES.items():
     exc = sub[meta["exc"]].to_numpy(float)
     rf = sub["rf"].to_numpy(float)
     gap = sub["gap"].to_numpy(float)
+    ff_acc = sub["ff_acc"].to_numpy(float)
     dates = sub.index.to_numpy()
     n = len(sub)
     order = np.argsort(-tot, kind="stable")
@@ -328,7 +329,7 @@ for key, meta in SERIES.items():
             sens_rows.append(m)
             # financing costs (common/leverage.py presets)
             for fname in COST_PRESETS:
-                drag = LV.PRESETS[fname].cost(f, 1.0 / apy, gap[k])
+                drag = LV.PRESETS[fname].cost(f, 1.0 / apy, gap[k], ff_acc[k])
                 m, _, _ = metrics(r_k + f * e_k - drag, r_k, d_k, apy, years)
                 m.update(base, variant=f"cost_{fname}", leverage=f,
                          leverage_min=f, leverage_max=f)

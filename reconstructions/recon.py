@@ -75,9 +75,10 @@ def excess(r: pd.Series, over: str = "bill") -> pd.Series:
     return (r - bill).dropna()
 
 
-def borrow_on(cal: pd.DatetimeIndex) -> pd.Series:
-    """What a loan costs per period before any spread: fed funds, accrued."""
-    return LV.benchmark_on(cal, assets.bill_on(cal), "bill_3m")
+def borrow_on(cal: pd.DatetimeIndex, fin: str = "letf") -> pd.Series:
+    """What a loan costs per period under preset `fin`: rate_beta x fed funds
+    + spread, accrued (common/leverage.py)."""
+    return LV.borrow_on(cal, assets.bill_on(cal), "bill_3m", fin)
 
 
 def ust_ladder_fut() -> pd.Series:
@@ -130,8 +131,7 @@ def _letf(L: float, equity: Callable[[], pd.Series]):
     def legs():
         eq = equity().dropna()
         return {"equity": Leg(eq, L),
-                "cash": Leg(borrow_on(eq.index), 1.0 - L,
-                            spread=LV.PRESETS["letf"].spread)}
+                "cash": Leg(borrow_on(eq.index, "letf"), 1.0 - L)}
     return legs
 
 
@@ -237,6 +237,33 @@ def history(fund: Fund) -> dict | None:
     return tbl, r
 
 
+# testfolio's own simulation of the same fund, where one was exported
+TESTFOLIO_SIM = {"SSO": "SSOSIM", "UPRO": "UPROSIM"}
+ERAS = [("1955-1969", "1955", "1969"), ("1970-1989", "1970", "1989"),
+        ("1990-2008", "1990", "2008"), ("2009+", "2009", "2100")]
+
+
+def vs_testfolio(fund: Fund, r: pd.Series) -> dict | None:
+    """Our history against testfolio's sim of the same fund, on shared dates
+    (both calendars are Monday-Friday after 1952, so they line up)."""
+    if fund.ticker not in TESTFOLIO_SIM:
+        return None
+    sys.path.insert(0, str(paths.TF))
+    import tf_load
+    tf = tf_load.load_letf_sims()[TESTFOLIO_SIM[fund.ticker]].pct_change().dropna()
+    j = r.index.intersection(tf.index)
+    j = j[j >= "1955-01-01"]
+    c = lambda s: float((1 + s).prod() ** (365.25 / (s.index[-1] - s.index[0]).days) - 1)
+    out = dict(sim=TESTFOLIO_SIM[fund.ticker], start=str(j[0].date()), end=str(j[-1].date()),
+               cagr_ours=c(r[j]), cagr_testfolio=c(tf[j]), corr_daily=float(r[j].corr(tf[j])),
+               eras={})
+    for lab, a, z in ERAS:
+        k = j[(j >= a) & (j <= f"{z}-12-31")]
+        if len(k) > 250:
+            out["eras"][lab] = dict(ours=c(r[k]), testfolio=c(tf[k]))
+    return out
+
+
 def run(fund: Fund) -> dict:
     print(f"\n== {fund.ticker}  {fund.name}\n   {fund.structure}")
     out = dict(ticker=fund.ticker, name=fund.name, structure=fund.structure,
@@ -261,6 +288,15 @@ def run(fund: Fund) -> dict:
         print(f"   hist  {tbl['start']}..{tbl['end']}  CAGR {tbl['cagr']*100:6.2f}%  "
               f"vol {tbl['vol']*100:5.1f}%  maxDD {tbl['max_dd']*100:6.1f}%  "
               f"Sharpe {tbl['sharpe']:.2f}   ({fund.history_note})")
+        vt = vs_testfolio(fund, r)
+        if vt:
+            out["vs_testfolio"] = vt
+            print(f"   vs testfolio {vt['sim']} {vt['start']}..{vt['end']}: ours "
+                  f"{vt['cagr_ours']*100:.2f}%  testfolio {vt['cagr_testfolio']*100:.2f}%  "
+                  f"gap {(vt['cagr_ours']-vt['cagr_testfolio'])*100:+.2f}pp  corr {vt['corr_daily']:.4f}")
+            for lab, e in vt["eras"].items():
+                print(f"      {lab:<10} ours {e['ours']*100:6.2f}%  testfolio {e['testfolio']*100:6.2f}%"
+                      f"  gap {(e['ours']-e['testfolio'])*100:+.2f}pp")
     return out
 
 
@@ -298,7 +334,7 @@ def main(argv=None):
         res = run(f)
         (OUT / f"{f.ticker}.json").write_text(json.dumps(res, indent=1, default=str),
                                               encoding="utf-8")
-        lv, h = res.get("live", {}), res.get("history", {})
+        lv, h, vt = res.get("live", {}), res.get("history", {}), res.get("vs_testfolio") or {}
         rows.append(dict(ticker=f.ticker, name=f.name, structure=f.structure, ter=f.ter,
                          live_start=lv.get("start"), live_years=lv.get("years"),
                          live_cagr_real=lv.get("cagr_real"), live_cagr_model=lv.get("cagr_synth"),
@@ -307,14 +343,17 @@ def main(argv=None):
                          hist_start=h.get("start"), hist_end=h.get("end"),
                          hist_cagr=h.get("cagr"), hist_vol=h.get("vol"),
                          hist_maxdd=h.get("max_dd"), hist_sharpe=h.get("sharpe"),
-                         hist_note=f.history_note))
+                         hist_note=f.history_note,
+                         tf_sim=vt.get("sim"), tf_window=(f"{vt['start']}..{vt['end']}" if vt else None),
+                         tf_cagr_ours=vt.get("cagr_ours"), tf_cagr_testfolio=vt.get("cagr_testfolio")))
     if not argv:
         print("\n== Investable small-cap value vs Ken French SMALL HiBM")
         (OUT / "investable_scv.json").write_text(json.dumps(investable_scv(), indent=1),
                                                  encoding="utf-8")
         pd.DataFrame(rows).to_csv(OUT / "recon_summary.csv", index=False)
         manifest.record(OUT, "recon.py", funds=[f.ticker for f in funds],
-                        letf_spread=LV.LETF_SPREAD, borrow_benchmark="fed funds",
+                        letf_spread=LV.LETF_SPREAD, letf_rate_beta=LV.LETF_RATE_BETA,
+                        borrow_benchmark="fed funds",
                         **D.EC_CONFIG)
     print(f"\nwrote {OUT}")
 

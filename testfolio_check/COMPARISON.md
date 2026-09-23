@@ -211,6 +211,86 @@ On the 9,085 shared trading days (1990-07-03 → 2026-07-31):
 
 ---
 
+## SSOSIM / UPROSIM vs our leveraged-ETF model
+
+Both files start on 1885-03-20. After each fund's launch, testfolio's series **is the real fund**:
+
+| | window | real fund | testfolio | daily corr |
+|---|---|---:|---:|---:|
+| SSO | 2006-06-22 → 2026-09-21 | 15.84% | 15.85% | 0.9997 |
+| UPRO | 2009-06-26 → 2026-09-21 | 33.00% | 33.00% | 1.0000 |
+
+So the two sources can only disagree **before** launch, where both are models.
+
+### What testfolio charges for leverage
+
+Both sims apply one model to one underlying index `u`: `r_L = bill + L·(u − bill) − (L − 1)·(R − bill) − TER`. Two leverage levels are enough to solve it exactly, every day:
+
+* borrowing rate `R = 3·SSOSIM − 2·UPROSIM + TER`
+* underlying `u = 2·SSOSIM − UPROSIM + TER`
+
+Annual average of R against effective fed funds, 1955–2005 (before either fund existed): **R = 1.271 × fed funds + 0.67pp** (R² 0.9991, residual 0.12pp). Testfolio's borrowing cost therefore scales with the rate level: about fed funds + 2pp at 5% rates and + 3.4pp at 10%.
+
+| decade | testfolio R | fed funds | R − fed funds |
+|---|---:|---:|---:|
+| 1950s | 3.84% | 2.50% | +1.34pp |
+| 1960s | 5.88% | 4.18% | +1.69pp |
+| 1970s | 9.71% | 7.11% | +2.61pp |
+| 1980s | 13.38% | 9.96% | +3.41pp |
+| 1990s | 7.27% | 5.14% | +2.12pp |
+| 2000s | 4.39% | 2.91% | +1.48pp |
+
+The implied underlying `u` against the Ken French US market, on shared dates. The row before 1952 is **not comparable**: Ken French carries the Saturday sessions (real, positive-return days) and testfolio does not, so intersecting the two calendars deletes those days from ours.
+
+| era | testfolio u | KF US market | Δ |
+|---|---:|---:|---:|
+| 1927–1951 (calendar mismatch) | 8.06% | 0.64% | +7.42pp |
+| 1955–1969 | 10.62% | 10.37% | +0.25pp |
+| 1970–1989 | 12.61% | 11.31% | +1.30pp |
+| 1990–2008 | 7.30% | 7.40% | -0.10pp |
+| 2009–2026 | 15.00% | 14.95% | +0.05pp |
+
+Outside the 1970s–80s the index agrees to a few tenths of a point, so **the financing rule, not the index, is what separates the two histories**.
+
+### Which rule the real funds support
+
+The real SSO (2006+) and UPRO (2009+) have lived through two 4%-rate windows. Each financing rule, run on SPY and scored against the funds (model minus real, pp/yr; `common/validate_leverage.py`):
+
+| fund / regime | avg fed funds | constant spread (+0.69%) | ours (1.107 × fed funds + 0.43%) | testfolio (1.27 × fed funds + 0.67%) |
+|---|---:|---:|---:|---:|
+| SSO 2006-2008 | 3.83% | +0.18 | +0.07 | -0.53 |
+| SSO 2009-2015 ZIRP | 0.13% | -0.42 | -0.12 | -0.45 |
+| SSO 2016-2019 | 1.35% | -0.06 | +0.08 | -0.50 |
+| SSO 2020-2021 ZIRP | 0.22% | +0.51 | +0.84 | +0.45 |
+| SSO 2022+ | 3.96% | +0.16 | -0.04 | -1.06 |
+| SSO full life | 1.73% | +0.00 | +0.09 | -0.53 |
+| UPRO 2009-2015 ZIRP | 0.13% | -0.66 | +0.03 | -0.70 |
+| UPRO 2016-2019 | 1.35% | -0.31 | -0.00 | -1.26 |
+| UPRO 2020-2021 ZIRP | 0.22% | +1.81 | +2.51 | +1.67 |
+| UPRO 2022+ | 3.96% | +0.37 | -0.02 | -2.07 |
+| UPRO full life | 1.47% | -0.00 | +0.26 | -1.02 |
+
+Testfolio's rule is 0.5–2pp/yr too punitive in exactly the high-rate windows where it differs from ours. A constant spread is slightly generous there. The rate-sensitive fit matches every regime within ~0.1pp except 2020–21, whose COVID-crash swap costs at ~0% rates are excluded from the rate fit, and it is what `common/leverage.py`'s `letf` preset uses.
+
+### Resulting pre-launch histories
+
+| | era | ours | testfolio | Δ |
+|---|---|---:|---:|---:|
+| **SSO** | 1955–2026 | 12.39% | 12.37% | +0.02pp |
+| | 1955-1969 | 14.18% | 13.83% | +0.35pp |
+| | 1970-1989 | 8.70% | 9.16% | -0.47pp |
+| | 1990-2008 | 5.10% | 4.74% | +0.36pp |
+| | 2009+ | 24.03% | 24.14% | -0.12pp |
+| **UPRO** | 1955–2026 | 11.99% | 11.25% | +0.74pp |
+| | 1955-1969 | 17.94% | 16.88% | +1.06pp |
+| | 1970-1989 | 4.67% | 3.82% | +0.85pp |
+| | 1990-2008 | 0.49% | -0.74% | +1.23pp |
+| | 2009+ | 30.39% | 30.85% | -0.46pp |
+
+The remaining gap is testfolio's heavier high-rate financing. From 2009 the testfolio column is the real fund, and ours runs a little below it because the Ken French total market lagged the S&P 500 over that stretch.
+
+---
+
 ## DBMFSIM — no counterpart
 
 The managed-futures work in `SCV_leverage_analysis` (`mf_and_kelly.py`, `mf_solve_cost.py`) lost its outputs to a dead scratchpad and its scripts still point at that path, so there is nothing to compare against. DBMFSIM 2000-2026 — 6.77% CAGR, 9.58% volatility, −20.44% max drawdown, beta 0.01 — is a usable external benchmark if that work is revived. See `context/reference/tech-debt.md`.

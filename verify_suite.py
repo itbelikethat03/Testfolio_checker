@@ -67,6 +67,19 @@ def ntsd() -> dict:
             "ntsd.synth.maxdd": M.max_drawdown(r)}
 
 
+def letf() -> dict:
+    """SSO / UPRO history (reconstructions/recon.py's model), 1955-01 -> KF end."""
+    sys.path.insert(0, str(SUITE / "reconstructions"))
+    import recon
+    out = {}
+    for f in recon.FUNDS:
+        if f.ticker in ("SSO", "UPRO"):
+            r = recon.simulate(f, f.history_legs()).loc["1955":]
+            out[f"letf.{f.ticker}.hist_cagr"] = float((1 + r).prod() ** (
+                365.25 / (r.index[-1] - r.index[0]).days) - 1)
+    return out
+
+
 def kelly() -> dict:
     import kd_data
     import kd_kelly
@@ -100,7 +113,7 @@ def testfolio() -> dict:
 
 def collect() -> dict:
     out = {}
-    for fn in (efficient_core, ntsd, kelly, testfolio):
+    for fn in (efficient_core, ntsd, kelly, testfolio, letf):
         t0 = time.time()
         out.update(fn())
         print(f"  {fn.__name__:<16} {time.time() - t0:5.1f}s")

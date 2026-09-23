@@ -34,10 +34,10 @@ futures       +0.30%                    -- equity-index futures implied financin
 broker        +1.00%                    -- retail margin loan (Interactive Brokers
                                            Pro: fed funds + 1.5% below $100k, +1.0%
                                            to $1M, +0.5% to $50M); `with_spread`
-letf          +LETF_SPREAD, 0.91% TER, daily reset
+letf          1.107 x fed funds + 0.43%, 0.91% TER, daily reset
                                         -- a 2x/3x S&P 500 ETF (SSO / UPRO);
-                                           LETF_SPREAD is FITTED to the live funds
-                                           by common/validate_leverage.py
+                                           rate_beta and spread are FITTED to the
+                                           live funds by common/validate_leverage.py
 """
 from __future__ import annotations
 
@@ -50,10 +50,16 @@ import pandas as pd
 
 from common import paths
 
-# Fitted by common/validate_leverage.py: the swap spread over effective fed funds
-# that makes a modelled SSO / UPRO match the live funds' total return
-# (SSO 2006-2026: 0.69%, UPRO 2009-2026: 0.69%).
-LETF_SPREAD = 0.0069
+# Fitted by common/validate_leverage.py, jointly on live SSO and UPRO per-regime
+# CAGR errors: the swap financing rate is LETF_RATE_BETA x fed funds + LETF_SPREAD.
+# Every regime except 2020-21 is then matched within +-0.12pp/yr, including both
+# 4%-rate windows (2006-08, 2022+). 2020-21 is excluded from the fit: the COVID
+# crash raised swap/rebalancing costs at ~0% rates (a crisis cost, not a rate
+# effect), which leaves this model +0.09 (SSO) / +0.26 (UPRO) pp/yr generous over
+# the funds' whole lives. A constant spread fits 0.69% but runs +0.2-0.4pp
+# generous at 4% rates, which is what matters for pre-2009 history.
+LETF_SPREAD = 0.0043
+LETF_RATE_BETA = 1.107
 
 # Before FRED's daily fed funds series starts (1954-07), the benchmark is taken
 # as the bill rate plus the average 1955-2008 gap between fed funds and the
@@ -69,16 +75,26 @@ class Financing:
     ter: float = 0.0               # annual, on NAV
     daily_reset: bool = False
     over_fed_funds: bool = True    # False: borrow at rf (the frictionless case)
+    rate_beta: float = 1.0         # borrowing rate = rate_beta * fed funds + spread
     note: str = ""
 
     def with_spread(self, spread: float) -> "Financing":
         return replace(self, name=f"{self.name}@{spread:.2%}", spread=spread)
 
-    def cost(self, leverage: float, dt, gap=0.0):
+    def borrow_premium(self, dt, gap=0.0, ff_acc=0.0):
+        """What each borrowed unit costs over rf, per period: fed funds minus rf
+        (`gap`), plus (rate_beta - 1) x fed funds (`ff_acc`, the fed-funds
+        accrual), plus the spread. Zero gap/beta terms for `frictionless`."""
+        if not self.over_fed_funds:
+            return self.spread * dt
+        extra = (self.rate_beta - 1.0) * ff_acc if self.rate_beta != 1.0 else 0.0
+        return gap + extra + self.spread * dt
+
+    def cost(self, leverage: float, dt, gap=0.0, ff_acc=0.0):
         """Cost per period, as a positive return. `dt` is the period length in
-        years; `gap` the per-period benchmark-minus-rf accrual (see gap_on)."""
-        g = gap if self.over_fed_funds else 0.0
-        return max(leverage - 1.0, 0.0) * (g + self.spread * dt) + self.ter * dt
+        years; `gap` and `ff_acc` per-period accruals (see gap_on / ff_accrual_on)."""
+        return (max(leverage - 1.0, 0.0) * self.borrow_premium(dt, gap, ff_acc)
+                + self.ter * dt)
 
 
 PRESETS = {
@@ -89,7 +105,9 @@ PRESETS = {
     "broker": Financing("broker", spread=0.0100,
                         note="retail margin loan, fed funds + 1.0%"),
     "letf": Financing("letf", spread=LETF_SPREAD, ter=0.0091, daily_reset=True,
-                      note="2x/3x S&P 500 ETF, swap spread over fed funds fitted to SSO/UPRO"),
+                      rate_beta=LETF_RATE_BETA,
+                      note=f"2x/3x S&P 500 ETF, swap at {LETF_RATE_BETA:.2f} x fed funds "
+                           f"+ {LETF_SPREAD:.2%}, fitted to SSO/UPRO"),
 }
 
 SPREAD_GRID = (0.0, 0.003, 0.005, 0.010, 0.015)
@@ -127,6 +145,22 @@ def benchmark_on(cal: pd.DatetimeIndex, rf: pd.Series, rf_kind: str) -> pd.Serie
     return acc
 
 
+def ff_accrual_on(cal: pd.DatetimeIndex, rf: pd.Series, rf_kind: str) -> pd.Series:
+    """Fed-funds accrual per period on `cal` (the same as benchmark_on), named
+    for the rate_beta term of Financing.cost."""
+    return benchmark_on(cal, rf, rf_kind).rename("ff_acc")
+
+
+def borrow_on(cal: pd.DatetimeIndex, rf: pd.Series, rf_kind: str,
+              fin: "Financing | str") -> pd.Series:
+    """The full per-period borrowing rate of preset `fin` on `cal`
+    (rate_beta x fed funds + spread), for use as a loan leg's return."""
+    fin = get(fin)
+    ffa = benchmark_on(cal, rf, rf_kind)
+    days = pd.Series(cal, index=cal).diff().dt.days
+    return fin.rate_beta * ffa + fin.spread * days / 365.0
+
+
 def gap_on(cal: pd.DatetimeIndex, rf: pd.Series, rf_kind: str) -> pd.Series:
     """Benchmark minus rf, per period: what borrowing costs over lending,
     before any spread. Series on `cal`."""
@@ -134,7 +168,7 @@ def gap_on(cal: pd.DatetimeIndex, rf: pd.Series, rf_kind: str) -> pd.Series:
 
 
 def levered_returns(x, rf, leverage: float, fin: "Financing | str | None" = None,
-                    dt=None, ppy: float | None = None, gap=0.0):
+                    dt=None, ppy: float | None = None, gap=0.0, ff_acc=0.0):
     """Daily-reset levered return: rf + L*x - costs.
 
     `x` excess returns and `rf` bill returns per period (arrays or Series).
@@ -145,4 +179,4 @@ def levered_returns(x, rf, leverage: float, fin: "Financing | str | None" = None
         if ppy is None:
             raise ValueError("pass dt or ppy")
         dt = 1.0 / ppy
-    return rf + leverage * x - fin.cost(leverage, dt, gap)
+    return rf + leverage * x - fin.cost(leverage, dt, gap, ff_acc)

@@ -273,6 +273,120 @@ def ffscv_investigation(tf: pd.Series) -> list[str]:
     return L
 
 
+def letf_section() -> list[str]:
+    """SSOSIM / UPROSIM against our leveraged-ETF model, and why they differ."""
+    import json
+    from common import ff as FF, leverage as LV, assets, paths
+    sims = {k: v.pct_change().dropna() for k, v in tf_load.load_letf_sims().items()}
+    s2, s3 = sims["SSOSIM"], sims["UPROSIM"]
+    L = ["## SSOSIM / UPROSIM vs our leveraged-ETF model\n"]
+    L.append("Both files start on 1885-03-20. After each fund's launch, testfolio's series **is "
+             "the real fund**:\n")
+    L.append("| | window | real fund | testfolio | daily corr |")
+    L.append("|---|---|---:|---:|---:|")
+    for tic, sim in (("SSO", s2), ("UPRO", s3)):
+        real = assets.load(tic)
+        j = real.index.intersection(sim.index)
+        L.append(f"| {tic} | {j[0].date()} → {j[-1].date()} | {stats(real[j])['cagr']*100:.2f}% | "
+                 f"{stats(sim[j])['cagr']*100:.2f}% | {np.corrcoef(real[j], sim[j])[0, 1]:.4f} |")
+    L.append("")
+    L.append("So the two sources can only disagree **before** launch, where both are models.\n")
+
+    # --- what testfolio charges, backed out of the pair
+    j = s2.index.intersection(s3.index)
+    s2, s3 = s2[j], s3[j]
+    E = 0.0091
+    dt = pd.Series(j, index=j).diff().dt.days.fillna(1) / 365.0
+    R = 3 * s2 - 2 * s3 + E * dt
+    U = 2 * s2 - s3 + E * dt
+    ffr = LV.fed_funds()
+    Ra = R.groupby(R.index.year).sum() / dt.groupby(dt.index.year).sum()
+    A = pd.DataFrame({"R": Ra, "ff": ffr.groupby(ffr.index.year).mean()}).loc[1955:2005].dropna()
+    k, c = np.polyfit(A["ff"], A["R"], 1)
+    e = A["R"] - (k * A["ff"] + c)
+    L.append("### What testfolio charges for leverage\n")
+    L.append("Both sims apply one model to one underlying index `u`: `r_L = bill + L·(u − bill) − "
+             "(L − 1)·(R − bill) − TER`. Two leverage levels are enough to solve it exactly, every "
+             "day:\n")
+    L.append("* borrowing rate `R = 3·SSOSIM − 2·UPROSIM + TER`")
+    L.append("* underlying `u = 2·SSOSIM − UPROSIM + TER`\n")
+    L.append(f"Annual average of R against effective fed funds, 1955–2005 (before either fund "
+             f"existed): **R = {k:.3f} × fed funds + {c*100:.2f}pp** (R² "
+             f"{1 - e.var() / A['R'].var():.4f}, residual {e.std()*100:.2f}pp). Testfolio's "
+             "borrowing cost therefore scales with the rate level: about fed funds + 2pp at 5% "
+             "rates and + 3.4pp at 10%.\n")
+    dec = pd.DataFrame({"R": Ra, "ff": ffr.groupby(ffr.index.year).mean()}).loc[1955:2005]
+    dd = dec.groupby((dec.index // 10) * 10).mean() * 100
+    L.append("| decade | testfolio R | fed funds | R − fed funds |")
+    L.append("|---|---:|---:|---:|")
+    for d, r in dd.iterrows():
+        L.append(f"| {d}s | {r['R']:.2f}% | {r['ff']:.2f}% | {r['R'] - r['ff']:+.2f}pp |")
+    L.append("")
+
+    # --- the underlying is the same index as ours
+    m = FF.us_market_daily()["mkt_total"]
+    jj = U.index.intersection(m.index)
+    L.append("The implied underlying `u` against the Ken French US market, on shared dates. The "
+             "row before 1952 is **not comparable**: Ken French carries the Saturday sessions "
+             "(real, positive-return days) and testfolio does not, so intersecting the two "
+             "calendars deletes those days from ours.\n")
+    L.append("| era | testfolio u | KF US market | Δ |")
+    L.append("|---|---:|---:|---:|")
+    for a, z in (("1927", "1951"), ("1955", "1969"), ("1970", "1989"), ("1990", "2008"), ("2009", "2026")):
+        kk = jj[(jj >= a) & (jj <= f"{z}-12-31")]
+        cu, cm = stats(U[kk])["cagr"], stats(m[kk])["cagr"]
+        L.append(f"| {a}–{z}{' (calendar mismatch)' if a == '1927' else ''} | {cu*100:.2f}% | "
+                 f"{cm*100:.2f}% | {(cu-cm)*100:+.2f}pp |")
+    L.append("")
+    L.append("Outside the 1970s–80s the index agrees to a few tenths of a point, so **the "
+             "financing rule, not the index, is what separates the two histories**.\n")
+
+    # --- which financing rule the real funds support
+    vp = paths.RECON_OUT / "leverage_validation.json"
+    if vp.exists():
+        v = json.loads(vp.read_text(encoding="utf-8"))
+        rs = v["rate_sensitive"]
+        L.append("### Which rule the real funds support\n")
+        L.append("The real SSO (2006+) and UPRO (2009+) have lived through two 4%-rate windows. "
+                 "Each financing rule, run on SPY and scored against the funds (model minus real, "
+                 "pp/yr; `common/validate_leverage.py`):\n")
+        L.append("| fund / regime | avg fed funds | constant spread (+0.69%) | "
+                 f"ours ({rs['beta']:.3f} × fed funds + {rs['spread']*100:.2f}%) | "
+                 "testfolio (1.27 × fed funds + 0.67%) |")
+        L.append("|---|---:|---:|---:|---:|")
+        for key, row in v["model_errors_by_regime"].items():
+            L.append(f"| {key} | {row['avg_fed_funds']*100:.2f}% | {row['constant']*100:+.2f} | "
+                     f"{row['rate-sensitive']*100:+.2f} | {row['testfolio']*100:+.2f} |")
+        L.append("")
+        L.append("Testfolio's rule is 0.5–2pp/yr too punitive in exactly the high-rate windows "
+                 "where it differs from ours. A constant spread is slightly generous there. The "
+                 "rate-sensitive fit matches every regime within ~0.1pp except 2020–21, whose "
+                 "COVID-crash swap costs at ~0% rates are excluded from the rate fit, and it is "
+                 "what `common/leverage.py`'s `letf` preset uses.\n")
+
+    # --- the resulting histories
+    L.append("### Resulting pre-launch histories\n")
+    L.append("| | era | ours | testfolio | Δ |")
+    L.append("|---|---|---:|---:|---:|")
+    for tic in ("SSO", "UPRO"):
+        p = paths.RECON_OUT / f"{tic}.json"
+        if not p.exists():
+            continue
+        vt = json.loads(p.read_text(encoding="utf-8")).get("vs_testfolio")
+        if not vt:
+            continue
+        L.append(f"| **{tic}** | {vt['start'][:4]}–{vt['end'][:4]} | {vt['cagr_ours']*100:.2f}% | "
+                 f"{vt['cagr_testfolio']*100:.2f}% | {(vt['cagr_ours']-vt['cagr_testfolio'])*100:+.2f}pp |")
+        for lab, e in vt["eras"].items():
+            L.append(f"| | {lab} | {e['ours']*100:.2f}% | {e['testfolio']*100:.2f}% | "
+                     f"{(e['ours']-e['testfolio'])*100:+.2f}pp |")
+    L.append("")
+    L.append("The remaining gap is testfolio's heavier high-rate financing. From 2009 the "
+             "testfolio column is the real fund, and ours runs a little below it because the Ken "
+             "French total market lagged the S&P 500 over that stretch.\n")
+    return L
+
+
 def generic(tic: str, tf: pd.Series, ours: pd.Series, our_label: str,
             note: str) -> list[str]:
     tfr = tf.pct_change().dropna()
@@ -345,6 +459,9 @@ def main():
                  "four-currency bond ladder; TLTSIM is a **total-return** US long "
                  "Treasury. They differ by the whole financing leg by construction, so "
                  "the CAGR gap should be roughly the cash rate — and it is.")
+    L.append("---\n")
+
+    L += letf_section()
     L.append("---\n")
 
     L.append("## DBMFSIM — no counterpart\n")

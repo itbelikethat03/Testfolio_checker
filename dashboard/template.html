@@ -879,8 +879,10 @@ table.heat td.key{box-shadow:inset 0 0 0 2px var(--ink)}
             <div class="sub">Financing presets in <span class="mono">common/leverage.py</span></div></div></div>
           <div class="panel-bd"><div class="tw"><table class="dt" id="recon-fin" style="min-width:0"></table></div>
             <div class="tw" style="margin-top:14px"><table class="dt" id="recon-letf" style="min-width:0"></table></div></div>
-          <div class="panel-ft">The leveraged-ETF spread is fitted, not assumed: it is the spread over
-            fed funds that makes a model of SSO and UPRO built from SPY match the live funds. Borrowing is
+          <div class="panel-ft">The leveraged-ETF rate is fitted, not assumed: a slope on fed funds plus a spread, chosen so a
+            model of SSO and UPRO built from SPY matches the live funds in every rate regime (the 2020&ndash;21
+            COVID crash excluded from the fit). testfolio&rsquo;s own SSOSIM/UPROSIM charge about 1.27 &times; fed
+            funds + 0.67%, which overshoots the real funds by 0.5&ndash;2pp/yr at 4% rates. Borrowing is
             charged at fed funds, lending (cash) earns the T-bill: the two were ~0.33pp/yr apart before 2009.</div>
         </div>
         <div class="panel">
@@ -2673,18 +2675,21 @@ function renderReconGrowth(){
   crosshair(F, xs, ss, fmtMonth, v => v.toFixed(2) + "×");
 
   $("#recon-hist").innerHTML = `<thead><tr><th>Fund</th><th>Window</th><th>CAGR</th><th>Vol</th>
-    <th>Sharpe</th><th>Max DD</th><th>Longest DD</th><th>Ulcer</th></tr></thead><tbody>`
-    + RC.funds.filter(x => x.history).map(x => { const t = x.history;
+    <th>Sharpe</th><th>Max DD</th><th>Longest DD</th><th>Ulcer</th><th>vs testfolio sim</th></tr></thead><tbody>`
+    + RC.funds.filter(x => x.history).map(x => { const t = x.history, v = x.vs_testfolio;
+        const tf = v ? `${esc(v.sim)} ${pct(v.cagr_testfolio)} vs ours ${pct(v.cagr_ours)}
+          <div class="sub2">${yr(v.start)}–${yr(v.end)}, ${ppd(v.cagr_ours - v.cagr_testfolio)}/yr</div>` : "–";
         return `<tr${x.ticker === S.reconFund ? ` class="hi"` : ""}><td><strong>${esc(x.ticker)}</strong></td>
           <td>${yr(t.start)}–${yr(t.end)}</td><td>${pct(t.cagr)}</td><td>${pct(t.vol, 1)}</td>
           <td>${num(t.sharpe)}</td><td>${pct(t.max_dd, 1)}</td><td>${num(t.longest_dd_y, 1)}y</td>
-          <td>${num(t.ulcer, 1)}</td></tr>`; }).join("") + `</tbody>`;
+          <td>${num(t.ulcer, 1)}</td><td>${tf}</td></tr>`; }).join("") + `</tbody>`;
 }
 
 function renderReconSide(){
-  $("#recon-fin").innerHTML = `<thead><tr><th>Preset</th><th>Spread over fed funds</th><th>TER</th><th>Reset</th></tr></thead><tbody>`
+  $("#recon-fin").innerHTML = `<thead><tr><th>Preset</th><th>Borrowing rate</th><th>TER</th><th>Reset</th></tr></thead><tbody>`
     + RC.presets.map(p => `<tr><td><strong>${esc(p.name)}</strong><div class="sub2">${esc(p.note)}</div></td>
-        <td>${pct(p.spread)}</td><td>${pct(p.ter)}</td><td>${p.daily_reset ? "daily" : "periodic"}</td></tr>`).join("")
+        <td>${!p.over_fed_funds ? "T-bill" : `${p.rate_beta !== 1 ? num(p.rate_beta, 3) + " × " : ""}fed funds + ${pct(p.spread)}`}</td>
+        <td>${pct(p.ter)}</td><td>${p.daily_reset ? "daily" : "periodic"}</td></tr>`).join("")
     + `</tbody>`;
   const L = RC.letf || {};
   $("#recon-letf").innerHTML = `<thead><tr><th>Fund</th><th>Window</th><th>Live CAGR</th>

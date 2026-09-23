@@ -124,6 +124,7 @@ def load_daily(verbose=True, source=None):
     # What borrowing costs over this bill each day (fed funds - 1m bill; see
     # common/leverage.py). Used only by the cost presets, never by frictionless Kelly.
     df["gap"] = leverage.gap_on(df.index, df["rf"], "kf_1m")
+    df["ff_acc"] = leverage.ff_accrual_on(df.index, df["rf"], "kf_1m")
 
     if verbose:
         n_scv = int(df["scv_total"].notna().sum())
@@ -141,9 +142,10 @@ def series_frame(df, key, with_gap=False):
     Returns (frame[total, exc, rf(, gap)], apy, years). Always use this rather
     than reading columns off `load_daily()` directly -- the two series need not
     share a calendar, so a single apy for the whole frame can be wrong.
-    `with_gap` adds the per-day borrowing gap (fed funds minus rf)."""
+    `with_gap` adds the per-day borrowing gap (fed funds minus rf) and the
+    fed-funds accrual itself (`ff_acc`, for presets with rate_beta != 1)."""
     meta = SERIES[key]
-    cols = [meta["total"], meta["exc"], "rf"] + (["gap"] if with_gap else [])
+    cols = [meta["total"], meta["exc"], "rf"] + (["gap", "ff_acc"] if with_gap else [])
     sub = df[cols].dropna()
     apy, years = ann_factor(sub)
     return sub, apy, years
@@ -164,7 +166,8 @@ def ann_factor(df):
 def config() -> dict:
     """The data configuration every Kelly-study output depends on."""
     return dict(scv_source=SCV_SOURCE, scv_haircut=SCV_HAIRCUT,
-                borrow_benchmark="fed funds", letf_spread=leverage.LETF_SPREAD)
+                borrow_benchmark="fed funds", letf_spread=leverage.LETF_SPREAD,
+                letf_rate_beta=leverage.LETF_RATE_BETA)
 
 
 def write_manifest(script: str, **extra) -> None:

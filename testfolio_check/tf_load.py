@@ -130,9 +130,37 @@ def load_all(verbose: bool = True) -> dict[str, pd.Series]:
         for p in unused:
             dup_of = next((t for t, h in claimed.items()
                            if hashes[h[0]] == hashes[p]), None)
-            note = f"stale duplicate of {EXPECTED[dup_of]['label']}" if dup_of else "UNRECOGNISED"
+            stem = p.stem.replace("_daily", "")
+            note = (f"stale duplicate of {EXPECTED[dup_of]['label']}" if dup_of
+                    else "loaded separately (load_letf_sims)" if stem in LETF_SIMS
+                    else "used by efficient_core/ec_ntsd.py" if stem == "VEASIM"
+                    else "UNRECOGNISED")
             print(f"  [skipped] {p.name:<26} {note}")
 
+    return out
+
+
+# Leveraged-ETF simulations. Kept out of EXPECTED because no testfolio summary
+# table was transcribed for them (tf_verify.py needs one for every ticker there);
+# they are identified by content the same way.
+LETF_SIMS = {
+    "SSOSIM": dict(L=2.0, start="1885-03-20", end="2026-09-22",
+                   ending_value=27_546_785_293.12),
+    "UPROSIM": dict(L=3.0, start="1885-03-20", end="2026-09-22",
+                    ending_value=3_645_537_953.15),
+}
+
+
+def load_letf_sims() -> dict[str, pd.Series]:
+    """testfolio's SSOSIM / UPROSIM daily $ paths, verified by content."""
+    out = {}
+    for tic, exp in LETF_SIMS.items():
+        p = DATA / f"{tic}_daily.csv"
+        s = _read(p)
+        if not _matches(s, exp):
+            raise ValueError(f"{p.name} is not the expected {tic}: "
+                             f"{s.index[0].date()}..{s.index[-1].date()} ${s.iloc[-1]:,.2f}")
+        out[tic] = s
     return out
 
 

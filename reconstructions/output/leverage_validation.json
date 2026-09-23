@@ -70,8 +70,109 @@
     }
   },
   "benchmark": "effective fed funds (FRED DFF), act/360",
-  "letf_spread_used": 0.0069,
   "fitted_mean": 0.006895135898795732,
+  "rate_fits": {
+    "beta fitted, excl. 2020-21 (USED)": {
+      "spread": 0.004293780184927992,
+      "beta": 1.106921154839854
+    },
+    "beta = 1,  excl. 2020-21": {
+      "spread": 0.0060639087940381415,
+      "beta": 1.0
+    },
+    "beta fitted, all regimes": {
+      "spread": 0.008005668500801215,
+      "beta": 1.0000179656161847
+    },
+    "beta = 1,  all regimes": {
+      "spread": 0.008005910288278576,
+      "beta": 1.0
+    }
+  },
+  "rate_sensitive": {
+    "spread": 0.004293780184927992,
+    "beta": 1.106921154839854,
+    "excluded_from_fit": [
+      "2020-2021 ZIRP"
+    ]
+  },
+  "model_errors_by_regime": {
+    "SSO 2006-2008": {
+      "avg_fed_funds": 0.038317619047619045,
+      "constant": 0.0018069552836222913,
+      "rate-sensitive": 0.000730159004990516,
+      "testfolio": -0.005347621231439503
+    },
+    "SSO 2009-2015 ZIRP": {
+      "avg_fed_funds": 0.001301021566401816,
+      "constant": -0.004248291209494104,
+      "rate-sensitive": -0.001151786717314085,
+      "testfolio": -0.004450306726412778
+    },
+    "SSO 2016-2019": {
+      "avg_fed_funds": 0.013462027833001988,
+      "constant": -0.0006078395157280703,
+      "rate-sensitive": 0.0008255736702627026,
+      "testfolio": -0.004993991621229821
+    },
+    "SSO 2020-2021 ZIRP": {
+      "avg_fed_funds": 0.00224019801980198,
+      "constant": 0.005113601278445845,
+      "rate-sensitive": 0.008426421002987183,
+      "testfolio": 0.00449848194110003
+    },
+    "SSO 2022+": {
+      "avg_fed_funds": 0.03958652542372882,
+      "constant": 0.001583331468319571,
+      "rate-sensitive": -0.00035660764042289017,
+      "testfolio": -0.010635468929136804
+    },
+    "SSO full life": {
+      "avg_fed_funds": 0.017309433962264153,
+      "constant": 2.055605069095634e-05,
+      "rate-sensitive": 0.0008565093140018298,
+      "testfolio": -0.005254352341431234
+    },
+    "UPRO 2009-2015 ZIRP": {
+      "avg_fed_funds": 0.001261744966442953,
+      "constant": -0.006581371891037913,
+      "rate-sensitive": 0.0002629726378684527,
+      "testfolio": -0.006996840460234521
+    },
+    "UPRO 2016-2019": {
+      "avg_fed_funds": 0.013462027833001988,
+      "constant": -0.0031131248881715035,
+      "rate-sensitive": -4.411479043398003e-06,
+      "testfolio": -0.012608590173671441
+    },
+    "UPRO 2020-2021 ZIRP": {
+      "avg_fed_funds": 0.00224019801980198,
+      "constant": 0.01806673458974961,
+      "rate-sensitive": 0.025148583856555495,
+      "testfolio": 0.016738304987954145
+    },
+    "UPRO 2022+": {
+      "avg_fed_funds": 0.03958652542372882,
+      "constant": 0.0037157688254345622,
+      "rate-sensitive": -0.00017861735796875777,
+      "testfolio": -0.020718238596519667
+    },
+    "UPRO full life": {
+      "avg_fed_funds": 0.014654549653579678,
+      "constant": -4.6997698983863856e-05,
+      "rate-sensitive": 0.002623906268973464,
+      "testfolio": -0.010175105059710532
+    }
+  },
+  "rms_regime_error": {
+    "constant": 0.007020274055160787,
+    "rate-sensitive": 0.008858300594789039,
+    "testfolio": 0.011175570386784218
+  },
+  "letf_preset": {
+    "spread": 0.0043,
+    "beta": 1.107
+  },
   "fedfunds_minus_bill3": {
     "1955-2008": 0.0033353722133403446,
     "2009+": -8.633065017694272e-05

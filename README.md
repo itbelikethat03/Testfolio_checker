@@ -45,7 +45,7 @@ testfolio's metric conventions (see `testfolio_check\VERIFY.md`).
 |---|---|---|
 | `scv_leverage\kd_data.py` | `SCV_SOURCE = "kf"` / `"testfolio"` | Small-cap value series for the Kelly study. `kf` (default) is Ken French SMALL HiBM, which matches Ken French's own monthly file; `testfolio` is FFSCV (a different, undocumented construction ending 2025-10-31). They are never spliced. |
 | `scv_leverage\kd_data.py` | `SCV_HAIRCUT` | Annual investability drag subtracted from small value (DFSVX implies ~1.0%/yr) |
-| `common\leverage.py` | `PRESETS`, `LETF_SPREAD` | What borrowing costs. Loans are charged **effective fed funds** plus a spread (cash earns the T-bill; fed funds ran ~0.33pp/yr above the 3-month bill before 2009): `frictionless` (borrow at rf), `futures` (+0.30%), `broker` (+1.00%), `letf` (+0.69% fitted to live SSO/UPRO, + 0.91% TER, daily reset) |
+| `common\leverage.py` | `PRESETS`, `LETF_SPREAD` | What borrowing costs. Loans are charged **effective fed funds** plus a spread (cash earns the T-bill; fed funds ran ~0.33pp/yr above the 3-month bill before 2009): `frictionless` (borrow at rf), `futures` (+0.30%), `broker` (+1.00%), `letf` (1.107 × fed funds + 0.43%, fitted to live SSO/UPRO across rate regimes, + 0.91% TER, daily reset) |
 
 ## Layout
 

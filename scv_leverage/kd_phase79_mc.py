@@ -64,13 +64,14 @@ def block_idx(n_obs, n_sims, n_days, block, rng):
 
 
 def run_config(x_red, rf_red, levels, block, seed, apy, H, fin="frictionless",
-               gap_red=None):
+               prem_red=None):
     """levels: list of (label, f). Returns dict label -> metrics arrays.
 
     `apy` and `H` are per-series: the two series may sit on different calendars,
     so a 25-year horizon is a different number of trading days for each.
-    `fin` is a common/leverage.py financing preset; `gap_red` the per-day
-    fed-funds-minus-bill gap, resampled with the same index as the returns."""
+    `fin` is a common/leverage.py financing preset; `prem_red` its per-day cost
+    of each borrowed unit over rf (Financing.borrow_premium), resampled with the
+    same index as the returns."""
     n_obs = len(x_red)
     rng = np.random.default_rng(seed)
     fin = LV.get(fin)
@@ -81,14 +82,12 @@ def run_config(x_red, rf_red, levels, block, seed, apy, H, fin="frictionless",
         idx = block_idx(n_obs, hi - lo, H, block, rng)
         xb = x_red[idx].astype(np.float32)
         rb = rf_red[idx].astype(np.float32)
-        gb = (gap_red[idx].astype(np.float32)
-              if fin.over_fed_funds and gap_red is not None else np.float32(0.0))
+        pb = prem_red[idx].astype(np.float32) if fin.name != "frictionless" else None
         rf_wealth = np.prod(1.0 + rb, axis=1, dtype=np.float64)
         for lab, f in levels:
             ret = rb + f * xb
             if fin.name != "frictionless":
-                ret = ret - (np.float32(max(f - 1.0, 0.0)) * (gb + np.float32(fin.spread / apy))
-                             + np.float32(fin.ter / apy))
+                ret = ret - (np.float32(max(f - 1.0, 0.0)) * pb + np.float32(fin.ter / apy))
             fac = np.maximum(1.0 + ret, 0.0)
             nav = np.cumprod(fac, axis=1, dtype=np.float64)
             peak = np.maximum.accumulate(nav, axis=1)
@@ -133,7 +132,9 @@ for key, meta in SERIES.items():
     total = frame[meta["total"]].to_numpy(float)
     x_all = frame[meta["exc"]].to_numpy(float)
     rf_all = frame["rf"].to_numpy(float)
-    gap_all = frame["gap"].to_numpy(float)
+    prem_all = {p: np.broadcast_to(np.asarray(LV.PRESETS[p].borrow_premium(
+        1.0 / apy, frame["gap"].to_numpy(float), frame["ff_acc"].to_numpy(float)), float),
+        (len(frame),)).copy() for p in COST_PRESETS}
     order_best = np.argsort(-total, kind="stable")
 
     # baseline Kelly, estimated on the untouched sample
@@ -142,7 +143,7 @@ for key, meta in SERIES.items():
     for X in X_MC:
         keep = np.ones(len(frame), bool)
         keep[order_best[:X]] = False
-        x_red, rf_red, gap_red = x_all[keep], rf_all[keep], gap_all[keep]
+        x_red, rf_red = x_all[keep], rf_all[keep]
         f_stressed = kelly_emp(x_red, rf_red)
 
         levels = []
@@ -162,7 +163,8 @@ for key, meta in SERIES.items():
             # so it must NOT be used here -- reproducibility requirement)
             cfg_seed = SEED + 1000 * SERIES_ORDER[key] + 10 * X + SCHEME_SEED[sname]
             acc = run_config(x_red, rf_red, levels, blk, seed=cfg_seed,
-                             apy=apy, H=H, fin=fin, gap_red=gap_red)
+                             apy=apy, H=H, fin=fin,
+                             prem_red=prem_all[fin][keep] if fin in prem_all else None)
             for lab, f in levels:
                 m = metrics(acc[lab])
                 m.update(series=key, X=X, scheme=sname, level=lab,

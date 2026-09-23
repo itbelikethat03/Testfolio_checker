@@ -62,7 +62,8 @@ def manifest_warnings() -> list[str]:
     w += [f"efficient_core: {m}" for m in manifest.check(ECOUT, EC_SCRIPTS, **ec_data.EC_CONFIG)]
     if (RECONOUT / "recon_summary.csv").exists():
         w += [f"reconstructions: {m}" for m in
-              manifest.check(RECONOUT, ["recon.py"], letf_spread=LV.LETF_SPREAD)]
+              manifest.check(RECONOUT, ["recon.py"], letf_spread=LV.LETF_SPREAD,
+                             letf_rate_beta=LV.LETF_RATE_BETA)]
     return w
 
 
@@ -472,9 +473,10 @@ def recon_tables() -> dict | None:
     for tic in summary["ticker"]:
         f = read_json(RECONOUT / f"{tic}.json")
         funds.append({k: f.get(k) for k in ("ticker", "name", "structure", "ter",
-                                             "history", "history_monthly")})
+                                             "history", "history_monthly", "vs_testfolio")})
     out = dict(summary=records(summary), funds=json.loads(json.dumps(funds, default=str)),
-               presets=[dict(name=p.name, spread=p.spread, ter=p.ter,
+               presets=[dict(name=p.name, spread=p.spread, ter=p.ter, rate_beta=p.rate_beta,
+                             over_fed_funds=p.over_fed_funds,
                              daily_reset=p.daily_reset, note=p.note)
                         for p in LV.PRESETS.values()])
     for key, name in (("letf", "leverage_validation.json"),

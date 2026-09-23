@@ -37,22 +37,25 @@
   },
   "kd_phase2_validate.py": {
     "borrow_benchmark": "fed funds",
-    "letf_spread": 0.0069,
-    "run_at": "2026-09-23T12:04:48",
+    "letf_rate_beta": 1.107,
+    "letf_spread": 0.0043,
+    "run_at": "2026-09-23T14:43:23",
     "scv_haircut": 0.0,
     "scv_source": "kf"
   },
   "kd_phase346_removal.py": {
     "borrow_benchmark": "fed funds",
-    "letf_spread": 0.0069,
-    "run_at": "2026-09-23T12:04:53",
+    "letf_rate_beta": 1.107,
+    "letf_spread": 0.0043,
+    "run_at": "2026-09-23T14:43:30",
     "scv_haircut": 0.0,
     "scv_source": "kf"
   },
   "kd_phase5_control.py": {
     "borrow_benchmark": "fed funds",
-    "letf_spread": 0.0069,
-    "run_at": "2026-09-23T12:05:08",
+    "letf_rate_beta": 1.107,
+    "letf_spread": 0.0043,
+    "run_at": "2026-09-23T14:43:50",
     "scv_haircut": 0.0,
     "scv_source": "kf"
   },
@@ -65,8 +68,9 @@
   },
   "kd_phase8_diag.py": {
     "borrow_benchmark": "fed funds",
-    "letf_spread": 0.0069,
-    "run_at": "2026-09-23T12:05:10",
+    "letf_rate_beta": 1.107,
+    "letf_spread": 0.0043,
+    "run_at": "2026-09-23T14:43:52",
     "scv_haircut": 0.0,
     "scv_source": "kf"
   }

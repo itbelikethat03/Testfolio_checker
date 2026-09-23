@@ -14,14 +14,16 @@
       "SSO",
       "UPRO"
     ],
-    "letf_spread": 0.0069,
+    "letf_rate_beta": 1.107,
+    "letf_spread": 0.0043,
     "lev15_financing": "fed funds + futures spread",
-    "run_at": "2026-09-23T12:48:18",
+    "run_at": "2026-09-23T14:43:21",
     "us_3m_basis": "bond-equivalent"
   },
   "validate_leverage.py": {
     "benchmark": "fed funds",
-    "fitted_spread": 0.006895135898795732,
-    "run_at": "2026-09-23T12:48:10"
+    "fitted_beta": 1.106921154839854,
+    "fitted_spread": 0.004293780184927992,
+    "run_at": "2026-09-23T14:43:10"
   }
 }
