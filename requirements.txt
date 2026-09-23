@@ -1,0 +1,6 @@
+pandas
+numpy
+scipy
+matplotlib
+xlrd        # histretSP.xls (Damodaran)
+yfinance    # ETF / live-fund prices; cached in efficient_core/data_cache after the first run

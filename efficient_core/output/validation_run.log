@@ -1,0 +1,106 @@
+﻿==============================================================================
+DATA PROVENANCE -- is the NTSG series we are testing against real?
+==============================================================================
+  Xetra EUR line, inception..31/07/2026 :  20.31% cumulative
+  justETF independent NAV figure        :  20.31% cumulative   -> MATCH
+
+  LSE USD line to 31/07/2026 : YTD  9.49%  1Y 20.09%  inception 16.33% p.a.
+  WisdomTree factsheet '(USD)': YTD  7.14%  1Y 16.80%  inception 14.83% p.a.
+  -> UNRESOLVED: the marketing factsheet's performance table does not
+     reconcile with the fund's own price history in any of its three
+     listing currencies, nor with justETF's NAV series.  This study
+     uses the price-derived series, which two sources agree on.
+
+==============================================================================
+TEST 1 -- NTSX (WisdomTree U.S. Efficient Core Fund), live 2018-08-02
+  spec: 90% S&P 500 + 10% cash + 60% notional UST futures ladder,
+        expense ratio 0.20%/yr.  8 years including the 2022 crash.
+==============================================================================
+
+ladder (2, 4.5, 7, 18) -- cheapest-to-deliver (base case), sleeve duration 6.53y
+  window            2018-08-06 .. 2026-09-04  (8.08y, 2,032 obs)
+  cumulative        model  163.33%   actual  163.03%
+  annualised        model   12.73%   actual   12.72%   gap +0.02 pp/yr
+  volatility        model   17.29%   actual   18.14%
+  max drawdown      model  -30.16%   actual  -31.34%
+  corr 0.9632   beta 0.918   tracking error 4.88%/yr
+  weekly:  corr 0.9867   tracking error 2.84%/yr
+
+ladder (2, 5, 10, 30) -- nominal contract names, sleeve duration 8.54y
+  window            2018-08-06 .. 2026-09-04  (8.08y, 2,032 obs)
+  cumulative        model  159.02%   actual  163.03%
+  annualised        model   12.50%   actual   12.72%   gap -0.21 pp/yr
+  volatility        model   17.29%   actual   18.14%
+  max drawdown      model  -31.56%   actual  -31.34%
+  corr 0.9599   beta 0.915   tracking error 5.09%/yr
+  weekly:  corr 0.9842   tracking error 3.07%/yr
+
+  sanity: NTSX beta to SPY 0.891 (spec implies 0.90 plus bond noise)
+
+==============================================================================
+TEST 2 -- NTSG (WisdomTree Global Efficient Core UCITS ETF)
+  live 2024-11-05.  spec: 90% developed large-cap equity
+  + 10% four-currency cash + 60% notional US/DE/UK/JP bond futures,
+  TER 0.25% + 0.02% transaction costs.
+==============================================================================
+
+equity proxy = URTH (iShares MSCI World)
+  window            2024-11-12 .. 2026-09-04  (1.81y, 446 obs)
+  cumulative        model   32.98%   actual   31.03%
+  annualised        model   17.06%   actual   16.11%   gap +0.95 pp/yr
+  volatility        model   14.47%   actual   13.94%
+  max drawdown      model  -14.47%   actual  -15.90%
+  corr 0.3910   beta 0.406   tracking error 15.87%/yr
+  weekly (removes the London/New York close mismatch): corr 0.8671, TE 6.84%/yr
+
+equity proxy = Ken French Developed market
+  window            2024-11-12 .. 2026-07-31  (1.71y, 434 obs)
+  cumulative        model   27.27%   actual   29.95%
+  annualised        model   15.11%   actual   16.51%   gap -1.41 pp/yr
+  volatility        model   12.62%   actual   14.15%
+  max drawdown      model  -13.49%   actual  -15.51%
+  corr 0.5394   beta 0.481   tracking error 12.90%/yr
+  weekly (removes the London/New York close mismatch): corr 0.8917, TE 6.03%/yr
+
+Actual vs reconstruction, identical window, identical conventions
+           strategy    CAGR     vol Sharpe Sortino   MaxDD Calmar downside_dev  corr_equities  corr_bond_futures
+        Actual NTSG  16.73%  13.93%   0.92    1.34 -15.90%   1.05        9.60%          0.375              0.138
+Reconstructed 90/60  17.71%  14.46%   0.95    1.42 -14.47%   1.22        9.72%          0.987              0.220
+
+  Rolling 1/3/5/10-year returns are not reportable for NTSG: the
+  fund has ~1.8 years of history.  Rolling analysis is done on the
+  reconstructed series in ec_analysis.py, which has 21.9 years.
+
+  NTSG drawdowns deeper than 5% (actual fund):
+    2024-12-09 -> trough 2025-04-09 -15.90%  recovered 2025-06-05 (1.9 months)
+    2026-01-28 -> trough 2026-03-30  -8.90%  recovered 2026-04-16 (0.6 months)
+
+==============================================================================
+ATTRIBUTION of the model-minus-actual gap
+==============================================================================
+
+NTSX, 8.1 years: +0.02 pp/yr
+  Sources of difference, each independently measured or documented:
+    synthetic bonds sit ~+0.30pp/yr above traded UST ETFs, of which
+      ~0.15pp is those ETFs' own expense ratio; on 0.6x notional the
+      residual model richness is worth roughly      -0.09 pp/yr
+    futures roll cost / basis, not modelled          -0.05 pp/yr (est.)
+    fund securities lending income, not modelled     +0.02 pp/yr (est.)
+  The residual is inside the noise of an 8-year window: the standard
+  error of an annualised return at 18% vol over 8.1 years is about 6.4 pp/yr.
+
+NTSG, 1.8 years: +0.95 pp/yr
+  Largest identified sources of tracking error, in order:
+    1. equity sleeve.  NTSG screens its 1,500-stock universe on ESG
+       criteria; URTH does not.  The two developed-market proxies
+       available here differ from each other by ~1pp/yr, which is
+       larger than the whole model gap.
+    2. bond currency weights are an ESTIMATE derived from the fund's
+       published country weights (see ec_bonds.CCY_WEIGHTS).
+    3. the exact 8 futures contracts are not published.
+    4. non-synchronous closes (London vs New York) -- affects
+       tracking error and daily correlation, not cumulative return.
+  A 1.8-year window cannot separate these; the NTSX test is what
+  carries the replication claim.
+
+wrote C:\Python Datoteke\efficient_core_9060\output\validation.json

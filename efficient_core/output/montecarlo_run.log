@@ -1,0 +1,106 @@
+﻿============================================================================================
+MONTE CARLO -- 90/60 versus 100% global equities
+============================================================================================
+
+Sample A: global monthly reconstruction, 1990-07-31..2026-07-31, 433 months, 12-month blocks
+          equity  8.49%/yr, bond leg +2.30%/yr, cash  2.57%/yr
+Sample B: US annual 1928-2025, 98 years, 4-year blocks
+          equity 10.02%/yr, bond leg +1.12%/yr, cash  3.37%/yr
+
+20,000 paths per horizon, paired draws, costs 0.27%/yr charged to the 90/60 leg only.
+
+============================================================================================
+TABLE 2 -- OUTPERFORMANCE PROBABILITY
+============================================================================================
+
+Sample A -- global 1990-2026 (bond bull market era)
+   horizon  P(90/60 > All World)   median advantage    5th pct   95th pct
+      10yr                 69.9%             +0.75pp     -1.59pp     +2.96pp
+      20yr                 77.2%             +0.75pp     -0.91pp     +2.35pp
+      30yr                 81.1%             +0.74pp     -0.62pp     +2.05pp
+      40yr                 85.5%             +0.74pp     -0.41pp     +1.88pp
+
+Sample B -- US 1928-2025 (includes stagflation)
+   horizon  P(90/60 > All World)   median advantage    5th pct   95th pct
+      10yr                 49.4%             -0.03pp     -2.65pp     +2.48pp
+      20yr                 48.7%             -0.04pp     -1.92pp     +1.76pp
+      30yr                 48.4%             -0.04pp     -1.57pp     +1.43pp
+      40yr                 48.5%             -0.03pp     -1.36pp     +1.24pp
+
+============================================================================================
+DISTRIBUTIONS BY HORIZON
+============================================================================================
+
+Sample A (global 1990-2026)
+    hz       CAGR 90/60 (5/50/95)    CAGR equities (5/50/95)  wealth 90/60  wealth eq
+   10y    1.18    9.51   16.67     -0.68    8.80   17.15           2.48x      2.32x
+   20y    3.53    9.41   14.66      1.98    8.66   14.76           6.04x      5.26x
+   30y    4.58    9.37   13.70      3.15    8.65   13.68          14.70x     12.05x
+   40y    5.22    9.36   13.11      3.93    8.61   12.95          35.79x     27.18x
+
+    hz  vol 90/60   vol eq  median maxDD 90/60       eq  P(lose money) 90/60       eq
+   10y     13.40%   14.77%              -23.8%   -27.4%                3.05%    6.25%
+   20y     13.52%   14.89%              -33.6%   -38.5%                0.47%    1.75%
+   30y     13.56%   14.92%              -38.6%   -45.3%                0.10%    0.51%
+   40y     13.55%   14.93%              -41.6%   -49.3%                0.01%    0.17%
+
+    hz    P(CAGR>4%) 9060/eq     P(CAGR>6%) 9060/eq     P(CAGR>8%) 9060/eq
+   10y      86.6% /    80.3%       76.3% /    69.2%       62.1% /    55.7%
+   20y      93.5% /    87.8%       83.8% /    75.1%       65.8% /    56.7%
+   30y      96.6% /    91.9%       87.8% /    79.2%       68.7% /    58.1%
+   40y      98.3% /    94.7%       91.2% /    82.6%       70.5% /    58.6%
+
+Sample B (US 1928-2025)
+    hz       CAGR 90/60 (5/50/95)    CAGR equities (5/50/95)  wealth 90/60  wealth eq
+   10y    0.04   10.48   18.95     -0.98   10.78   19.52           2.71x      2.78x
+   20y    3.19   10.28   16.29      2.52   10.42   16.77           7.08x      7.26x
+   30y    4.47   10.24   15.30      3.92   10.34   15.71          18.62x     19.12x
+   40y    5.21   10.13   14.57      4.67   10.23   15.03          47.42x     49.15x
+
+    hz  vol 90/60   vol eq  median maxDD 90/60       eq  P(lose money) 90/60       eq
+   10y     17.20%   18.50%              -18.8%   -18.0%                4.95%    6.49%
+   20y     17.62%   18.83%              -28.2%   -36.5%                1.06%    1.69%
+   30y     17.71%   18.95%              -31.4%   -36.6%                0.27%    0.52%
+   40y     17.90%   19.13%              -37.0%   -38.9%                0.05%    0.13%
+
+    hz    P(CAGR>4%) 9060/eq     P(CAGR>6%) 9060/eq     P(CAGR>8%) 9060/eq
+   10y      86.5% /    84.5%       78.4% /    76.5%       67.0% /    66.3%
+   20y      93.1% /    91.5%       85.1% /    83.1%       71.5% /    70.4%
+   30y      96.1% /    94.8%       88.6% /    86.8%       74.6% /    73.2%
+   40y      97.8% /    96.7%       91.6% /    89.8%       77.0% /    75.0%
+
+============================================================================================
+MONTE CARLO SENSITIVITY -- the result is only as good as the bond leg
+============================================================================================
+
+The bond term premium realised in a sample is the single assumption the answer
+turns on.  Here the historical bond leg is shifted up and down before
+resampling, holding everything else -- including the equity/bond correlation
+structure of the blocks -- unchanged.
+
+  Sample A's own bond term premium is +2.30%/yr.
+
+    shift  term premium    P(win) 10y    P(win) 20y    P(win) 30y    P(win) 40y
+    -2.0%        +0.30%         34.0%         29.6%         24.2%         21.6%
+    -1.5%        +0.80%         43.4%         40.7%         39.0%         38.6%
+    -1.0%        +1.30%         52.1%         53.4%         54.5%         55.9%
+    -0.5%        +1.80%         60.9%         65.3%         69.7%         72.2%
+    +0.0%        +2.30%         70.4%         77.0%         81.7%         85.4%
+    +0.5%        +2.80%         78.0%         85.0%         91.2%         93.5%
+    +1.0%        +3.30%         83.6%         91.4%         95.5%         97.7%
+
+    shift  term premium    median adv 10y    median adv 20y    median adv 30y    median adv 40y
+    -2.0%        +0.30%          -0.61pp          -0.53pp          -0.57pp          -0.55pp
+    -1.5%        +0.80%          -0.23pp          -0.24pp          -0.23pp          -0.20pp
+    -1.0%        +1.30%          +0.07pp          +0.09pp          +0.09pp          +0.11pp
+    -0.5%        +1.80%          +0.40pp          +0.40pp          +0.40pp          +0.42pp
+    +0.0%        +2.30%          +0.75pp          +0.77pp          +0.75pp          +0.74pp
+    +0.5%        +2.80%          +1.08pp          +1.07pp          +1.07pp          +1.07pp
+    +1.0%        +3.30%          +1.38pp          +1.38pp          +1.40pp          +1.39pp
+
+  The probability of winning crosses 50% at roughly the break-even
+  term premium derived analytically in ec_analysis.py section 4b.
+  Below that the structure is a losing bet on expected return, and
+  the case for it has to rest entirely on risk reduction.
+
+wrote montecarlo_*.csv / .npz / .json to C:\Python Datoteke\efficient_core_9060\output

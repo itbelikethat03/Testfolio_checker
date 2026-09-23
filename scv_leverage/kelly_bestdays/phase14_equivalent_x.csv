@@ -1,0 +1,37 @@
+series,frac,metric,target,full_x0,equivalent_X,how
+mkt,half,cagr,0.11820138587007545,0.14903182447736774,11.3323452058663,interpolated
+mkt,half,ann_vol,0.228546674180072,0.4571129145667999,,no match in 0-500 (target below Full -X range)
+mkt,half,sharpe,0.46614813037710473,0.46614813037710473,0.0,exact
+mkt,half,sortino,0.6570431657481695,0.6570431657481695,0.0,exact
+mkt,half,max_dd,-0.9175848811609626,-0.9966754611485887,,no match in 0-500 (target above Full -X range)
+mkt,half,calmar,0.12881793095862984,0.14952893924529906,6.959406800330346,interpolated
+mkt,half,mdd_duration_days,5872.0,8920.0,,no match in 0-500 (target below Full -X range)
+mkt,half,worst_month,-0.36494235466291225,-0.6104393148826501,,no match in 0-500 (target above Full -X range)
+mkt,half,log_final_wealth,11.153184539022357,13.868388435899895,11.327541192899623,interpolated
+mkt,quarter,cagr,0.08124897953109812,0.14903182447736774,30.642148069794874,interpolated
+mkt,quarter,ann_vol,0.1142700235401623,0.4571129145667999,,no match in 0-500 (target below Full -X range)
+mkt,quarter,sharpe,0.46614813037710473,0.46614813037710473,0.0,exact
+mkt,quarter,sortino,0.6570431657481695,0.6570431657481695,0.0,exact
+mkt,quarter,max_dd,-0.6806677551014767,-0.9966754611485887,,no match in 0-500 (target above Full -X range)
+mkt,quarter,calmar,0.11936657631003131,0.14952893924529906,10.889384748323929,interpolated
+mkt,quarter,mdd_duration_days,5023.0,8920.0,,no match in 0-500 (target below Full -X range)
+mkt,quarter,worst_month,-0.19975284637958501,-0.6104393148826501,,no match in 0-500 (target above Full -X range)
+mkt,quarter,log_final_wealth,7.798423468874926,13.868388435899895,30.623082248372853,interpolated
+scv,half,cagr,0.17665601313258292,0.23037185788218614,14.756527180695755,interpolated
+scv,half,ann_vol,0.292103996474128,0.5842328561922139,,no match in 0-500 (target below Full -X range)
+scv,half,sharpe,0.5956293781096133,0.5956293781096133,0.0,exact
+scv,half,sortino,0.8471708592905232,0.8471708592905232,0.0,exact
+scv,half,max_dd,-0.9588493844300482,-0.9992356515754022,,no match in 0-500 (target above Full -X range)
+scv,half,calmar,0.18423749965443156,0.23054807694159052,11.81348751547284,interpolated
+scv,half,mdd_duration_days,2894.0,7995.0,,no match in 0-500 (target below Full -X range)
+scv,half,worst_month,-0.45870460322554873,-0.72298508116512,,no match in 0-500 (target above Full -X range)
+scv,half,log_final_wealth,16.24003901233824,20.6964534246431,14.755263140421807,interpolated
+scv,quarter,cagr,0.11372951802957862,0.23037185788218614,43.48882350692911,interpolated
+scv,quarter,ann_vol,0.14604462824446368,0.5842328561922139,,no match in 0-500 (target below Full -X range)
+scv,quarter,sharpe,0.5956293781096133,0.5956293781096133,0.0,exact
+scv,quarter,sortino,0.8471708592905232,0.8471708592905232,0.0,exact
+scv,quarter,max_dd,-0.7699131429018381,-0.9992356515754022,,no match in 0-500 (target above Full -X range)
+scv,quarter,calmar,0.14771733549180213,0.23054807694159052,27.040640299112862,interpolated
+scv,quarter,mdd_duration_days,2543.0,7995.0,,no match in 0-500 (target below Full -X range)
+scv,quarter,worst_month,-0.2592060313524748,-0.72298508116512,,no match in 0-500 (target above Full -X range)
+scv,quarter,log_final_wealth,10.75314679984494,20.6964534246431,43.44044674821789,interpolated

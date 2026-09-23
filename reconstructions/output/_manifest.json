@@ -1,0 +1,27 @@
+{
+  "recon.py": {
+    "borrow_benchmark": "fed funds",
+    "coupons": "usd/gbp/jpy semi-annual",
+    "engine": "common.backtest",
+    "equity_futures_financing": "fed funds + spread",
+    "funds": [
+      "NTSX",
+      "NTSI",
+      "NTSE",
+      "GDE",
+      "RSSB",
+      "RSST",
+      "SSO",
+      "UPRO"
+    ],
+    "letf_spread": 0.0069,
+    "lev15_financing": "fed funds + futures spread",
+    "run_at": "2026-09-23T12:48:18",
+    "us_3m_basis": "bond-equivalent"
+  },
+  "validate_leverage.py": {
+    "benchmark": "fed funds",
+    "fitted_spread": 0.006895135898795732,
+    "run_at": "2026-09-23T12:48:10"
+  }
+}

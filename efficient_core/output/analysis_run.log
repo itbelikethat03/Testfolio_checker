@@ -1,0 +1,379 @@
+﻿
+============================================================================================
+1. WINDOWS AND DATA PROVENANCE
+============================================================================================
+
+    Reconstruction window   1990-07-03 .. 2026-07-31
+                            (36.1 years, 9,414 trading days)
+    Actual NTSG history     2024-11-08 .. 2026-09-04
+                            (1.8 years -- SYNTHETIC history before that)
+    Actual NTSX history     2018-08-02 .. 2026-09-04
+                            (same construction, US-only; the replication test)
+
+    Everything below the NTSG row is a RECONSTRUCTION built from index rules
+    plus primary market data.  It is not fund history and is labelled as such
+    in every table.  Bond-sleeve currencies: 3 (USD/GBP/JPY) before 2004-09,
+    4 afterwards, because the ECB euro curve starts then.
+    
+
+============================================================================================
+2. TABLE 1 -- RETURN AND RISK, COMMON WINDOW
+============================================================================================
+
+  (a) COMMON window to all five: 2008-03-31 .. 2026-07-31 (18.3 years)
+                              strategy      start        end  years    CAGR     vol Sharpe Sortino   MaxDD Calmar downside_dev worst_year best_year
+     Global equities, All World (ACWI) 2008-03-31 2026-07-31  18.33   8.44%  20.13%   0.44    0.61 -56.28%   0.15       14.43%    -18.39%    32.36%
+Developed equities (index NTSG tracks) 2008-03-31 2026-07-31  18.33   8.94%  16.49%   0.52    0.72 -54.46%   0.16       11.95%    -17.70%    31.48%
+      Developed equities, 1.5x levered 2008-03-31 2026-07-31  18.33  11.93%  24.55%   0.53    0.73 -70.35%   0.17       17.80%    -25.92%    47.04%
+             Developed small-cap value 2008-03-31 2026-07-31  18.33   8.67%  14.69%   0.55    0.75 -52.26%   0.17       10.69%    -17.58%    36.77%
+                   Reconstructed 90/60 2008-03-31 2026-07-31  18.33   8.75%  14.43%   0.56    0.78 -47.63%   0.18       10.34%    -24.10%    27.55%
+
+  (b) LONGEST window available to each series (NOT comparable across rows -- windows differ)
+                              strategy      start        end  years    CAGR     vol Sharpe Sortino   MaxDD Calmar downside_dev worst_year best_year
+     Global equities, All World (ACWI) 2008-03-31 2026-07-31  18.33   8.44%  20.13%   0.44    0.61 -56.28%   0.15       14.43%    -18.39%    32.36%
+Developed equities (index NTSG tracks) 1990-07-03 2026-07-31  36.08   8.49%  14.67%   0.45    0.63 -57.03%   0.15       10.56%    -40.13%    36.11%
+      Developed equities, 1.5x levered 1990-07-03 2026-07-31  36.08  10.45%  21.85%   0.44    0.62 -73.33%   0.14       15.75%    -56.21%    54.69%
+             Developed small-cap value 1990-07-03 2026-07-31  36.08  10.90%  12.39%   0.69    0.95 -57.85%   0.19        8.98%    -36.71%    62.94%
+                   Reconstructed 90/60 1990-07-03 2026-07-31  36.08   9.27%  13.01%   0.55    0.77 -48.79%   0.19        9.26%    -31.16%    32.84%
+
+  (c) The actual fund, over its own short life (1.8 years -- NOT comparable to the rows above)
+                        strategy      start        end  years    CAGR     vol Sharpe Sortino   MaxDD Calmar downside_dev
+              Actual NTSG (live) 2024-11-11 2026-07-31   1.72  16.42%  14.14%   0.87    1.26 -15.51%   1.06        9.75%
+Reconstructed 90/60, same window 2024-11-11 2026-07-31   1.72  14.40%  12.70%   0.82    1.16 -13.49%   1.07        8.92%
+ Developed equities, same window 2024-11-11 2026-07-31   1.72  16.93%  13.58%   0.93    1.33 -16.00%   1.06        9.56%
+
+============================================================================================
+3. ANNUALISED RETURN COMPARISON ACROSS EXPLICIT WINDOWS
+============================================================================================
+
+    window                             Global equitie  Developed equi  Developed equi  Developed smal  Reconstructed      Actual NTSG
+    full reconstruction 1990-2026                 n/a           8.49%          10.45%          10.90%           9.27%             n/a
+    since ACWI exists (2008-2026)               8.44%           8.92%          11.89%           8.68%           8.74%             n/a
+    since NTSX exists (2018-2026)              11.98%          11.98%          16.13%           9.83%           9.90%             n/a
+    since NTSG exists (2024-2026)              17.86%          16.85%          22.92%          25.21%          14.34%          16.42%
+
+    Rows use DIFFERENT windows and must not be compared vertically.
+    'n/a' means the series does not span that window at all -- it is
+    never silently replaced by a shorter period.
+
+  Sub-periods of the reconstruction, so the 36-year average is not
+  mistaken for a stable result:
+
+    sub-period               equities     90/60      diff   bond leg  90/60 vol   eq vol
+    1990-1999                  12.04%    13.33%    +1.30pp      3.50%     10.85%   11.30%
+    2000-2009                   1.38%     3.83%    +2.45pp      3.58%     14.79%   17.16%
+    2010-2019                   9.72%    10.71%    +0.99pp      3.16%     10.94%   13.00%
+    2020-2026                  12.87%     9.85%    -3.02pp     -2.50%     15.62%   17.07%
+
+    The bond leg column is the excess return on 1.0 of notional; it
+    is the single variable that decides the sign of the 'diff' column.
+
+============================================================================================
+4. WHY LEVERAGED BONDS CAN WORK AT ALL -- the identity, then the data
+============================================================================================
+
+The fund holds, per 1.00 of NAV:  0.90 equity + 0.10 cash + 0.60 bond futures.
+A futures position needs no funded capital and returns the bond's return minus
+the local short rate, so:
+
+    r(90/60) = 0.90*E + 0.10*C + 0.60*(Bd - C) - costs
+
+Subtracting a 100% equity portfolio, r = E:
+
+    r(90/60) - E = 0.60*(Bd - C) - 0.10*(E - C) - costs
+                 = 0.60 * BOND TERM PREMIUM - 0.10 * EQUITY RISK PREMIUM - costs
+
+That is the whole trade.  The 90/60 structure does NOT bet that bonds beat
+equities.  It gives up one tenth of the equity risk premium to buy six tenths
+of the bond term premium.  It wins on expected return whenever
+
+    bond term premium  >  (1/6) * equity risk premium  +  (costs / 0.6)
+
+Because the multiplier is 6:1, a bond term premium that looks trivially small
+still clears the bar.  With a 5% equity risk premium and 0.27% of costs, the
+break-even term premium is only 0.83% + 0.45% = 1.28% a year.
+
+Measured over the reconstruction window 1990-07-03..2026-07-31 (36.1 years):
+    developed equity total return            8.49% p.a.
+    four-currency cash (the funding rate)    2.57% p.a.
+    equity risk premium  E - C               5.92% p.a.
+    bond term premium    Bd - C (measured)   2.30% p.a.
+    break-even term premium needed           1.44% p.a.
+
+    +0.60 x bond term premium               +1.38 pp
+    -0.10 x equity risk premium             -0.59 pp
+    -costs                                  -0.27 pp
+    -------------------------------------- ------
+    predicted edge over 100% equities       +0.52 pp
+    actually realised (CAGR difference)     +0.78 pp
+    (the two differ only by rebalancing and compounding effects)
+
+============================================================================================
+4b. BREAK-EVEN: at what term premium does the bond leg stop paying?
+============================================================================================
+
+  Break-even bond term premium (bond return minus financing cost)
+  needed for 90/60 to match 100% equities, per equity risk premium:
+
+     equity risk premium :    2.0%    3.0%    4.0%    5.0%    6.0%    7.0%
+     costs 0.00%/yr      :   0.33%   0.50%   0.67%   0.83%   1.00%   1.17%
+     costs 0.27%/yr      :   0.78%   0.95%   1.12%   1.28%   1.45%   1.62%
+     costs 0.50%/yr      :   1.17%   1.33%   1.50%   1.67%   1.83%   2.00%
+
+  Contribution of the bond leg at various term premia (0.60x):
+     term premium -1.00%  ->  0.60x = -0.60 pp,  net vs equities -1.37 pp  NEGATIVE
+     term premium -0.50%  ->  0.60x = -0.30 pp,  net vs equities -1.07 pp  NEGATIVE
+     term premium +0.00%  ->  0.60x = +0.00 pp,  net vs equities -0.77 pp  NEGATIVE
+     term premium +0.50%  ->  0.60x = +0.30 pp,  net vs equities -0.47 pp  NEGATIVE
+     term premium +1.00%  ->  0.60x = +0.60 pp,  net vs equities -0.17 pp  roughly neutral
+     term premium +1.50%  ->  0.60x = +0.90 pp,  net vs equities +0.13 pp  roughly neutral
+     term premium +2.00%  ->  0.60x = +1.20 pp,  net vs equities +0.43 pp  POSITIVE
+     term premium +2.50%  ->  0.60x = +1.50 pp,  net vs equities +0.73 pp  POSITIVE
+     term premium +3.00%  ->  0.60x = +1.80 pp,  net vs equities +1.03 pp  POSITIVE
+  (net column assumes a 5% equity risk premium and 0.27%/yr of costs)
+
+============================================================================================
+5. TABLE 3 -- FINANCING-COST SENSITIVITY
+============================================================================================
+
+A word on what "financing cost" means here.  The 90/60 fund does not borrow at
+a quoted rate; it holds futures, whose price already embeds the local money
+market rate.  So the financing cost is not a free parameter -- it is whatever
+short rates are.  What IS a free parameter is the SPREAD the fund pays over
+that rate through the futures basis and the roll.  Both are shown.
+
+5a. HISTORICAL -- an extra financing spread on the 0.60 notional,
+    applied to the actual 1990-2026 path.
+
+      spread  90/60 CAGR     vol  Sharpe   vs 100% equities
+       0.00%       9.27%  13.01%    0.55             +0.78 pp
+       0.25%       9.11%  13.01%    0.53             +0.62 pp
+       0.50%       8.95%  13.01%    0.52             +0.46 pp
+       1.00%       8.63%  13.02%    0.50             +0.14 pp
+       2.00%       7.99%  13.02%    0.45             -0.50 pp
+
+    100% developed equities over the same window: 8.49% CAGR, 14.67% vol, Sharpe 0.45
+    A 1pp financing spread costs 0.60pp of return -- it is levied on
+    the full 0.60 notional, not on the 0.50 of net leverage.
+
+5b. FORWARD-LOOKING -- absolute financing cost 2% to 6%.
+
+    Anchor from today's curves (2026-09-07):
+      weighted ladder yield           4.32%   <- the forward bond return estimate
+      weighted short rate             3.44%   <- today's actual financing cost
+      implied term premium            0.88%
+
+    Assumptions: equity total return 7.5%/yr (ESTIMATE), bond return = ladder yield 4.32% (held fixed),
+    costs 0.27%/yr (documented).
+
+     financing cost  90/60 CAGR  vs All World
+               2.0%       8.07%        +0.57 pp
+               3.0%       7.57%        +0.07 pp
+               4.0%       7.07%        -0.43 pp
+               5.0%       6.57%        -0.93 pp
+               6.0%       6.07%        -1.43 pp
+
+    d(return)/d(financing) = 0.10 - 0.60 = -0.50: every extra 1pp of
+    financing cost costs 0.50pp, because the fund is 50% net levered.
+    The level of rates only matters through the SPREAD between the
+    ladder yield and the short rate; a parallel rise in both is neutral.
+
+============================================================================================
+6. SENSITIVITY TO BOND RETURNS, EQUITY RETURNS, CORRELATION, VOL
+============================================================================================
+
+6a. Expected-return grid: 90/60 minus 100% equities, in pp per year.
+    rows = bond total return, cols = equity total return, financing fixed at 3.44%, costs 0.27%
+
+            E=  4.0% E=  5.5% E=  7.0% E=  8.5% E= 10.0% 
+    B= 0.0%    -2.39   -2.54   -2.69   -2.84   -2.99 
+    B= 1.5%    -1.49   -1.64   -1.79   -1.94   -2.09 
+    B= 3.0%    -0.59   -0.74   -0.89   -1.04   -1.19 
+    B= 4.5%    +0.31   +0.16   +0.01   -0.14   -0.29 
+    B= 6.0%    +1.21   +1.06   +0.91   +0.76   +0.61 
+
+    Read it as: the 90/60 edge is almost entirely a function of the
+    BOND row.  Moving equities from 4% to 10% changes the edge by only
+    0.6pp, because only 0.10 of equity exposure was given up.
+
+6b. Correlation: what it does and does not change.
+
+    measured: equity vol 14.67%, bond-futures vol 4.64%, correlation -0.179
+
+     correlation  90/60 vol  vs equity vol  Sharpe ratio 90/60
+          -0.60     11.75%         -2.92 pp               0.57
+          -0.30     12.65%         -2.02 pp               0.53
+          +0.00     13.49%         -1.18 pp               0.50
+          +0.30     14.29%         -0.38 pp               0.47
+          +0.60     15.04%         +0.37 pp               0.45
+          +0.90     15.75%         +1.08 pp               0.43
+    (100% equities: vol 14.67%, Sharpe 0.45)
+
+    Correlation does NOT enter the expected-return identity at all.
+    It decides only whether the extra 0.60 of bond exposure is bought
+    cheaply in risk terms.  At rho = +0.9 the 90/60 portfolio is
+    riskier than 100% equities and the structure loses its point;
+    at rho <= 0 it is less risky AND higher returning.
+
+6c. Rolling 3-year stock/bond correlation -- is the diversification
+    benefit stable?
+
+    1993:+0.26  1994:+0.20  1995:+0.15  1996:+0.20  1997:+0.27  1998:+0.15  1999:-0.06  2000:-0.11  
+    2001:-0.13  2002:-0.19  2003:-0.39  2004:-0.36  2005:-0.27  2006:+0.01  2007:-0.03  2008:-0.30  
+    2009:-0.38  2010:-0.40  2011:-0.40  2012:-0.50  2013:-0.51  2014:-0.43  2015:-0.27  2016:-0.32  
+    2017:-0.33  2018:-0.32  2019:-0.31  2020:-0.41  2021:-0.39  2022:-0.26  2023:+0.05  2024:+0.13  
+    2025:+0.12  2026:+0.09  
+
+6d. Volatility drag.  Arithmetic mean return is not what compounds.
+
+    100% equities    arithmetic  9.23%  geometric  8.49%  drag  0.74 pp
+    1.5x equities    arithmetic 12.34%  geometric 10.45%  drag  1.89 pp
+    90/60            arithmetic  9.72%  geometric  9.27%  drag  0.44 pp
+
+    The 1.5x equity portfolio loses the most to drag: same premium,
+    much more variance.  That is the case against levering equity, and
+    the case for levering a low-volatility, low-correlation asset.
+
+============================================================================================
+7. ROLLING ANALYSIS -- is the edge persistent or concentrated?
+============================================================================================
+
+      window  periods  90/60 wins  median diff   5th pct  95th pct    worst     best
+         1yr    9,154       53.9%       +0.67pp    -6.21pp    +7.14pp  -13.23pp   +9.48pp
+         3yr    8,632       63.2%       +0.87pp    -4.66pp    +4.81pp   -6.14pp   +6.36pp
+         5yr    8,110       71.1%       +0.95pp    -3.34pp    +3.56pp   -5.32pp   +5.06pp
+        10yr    6,806       81.6%       +1.49pp    -1.52pp    +2.45pp   -2.44pp   +2.89pp
+
+    Sustained spells (3 months or more of consecutive rolling
+    windows) in which 90/60 UNDERPERFORMED over the trailing 5 years.
+    The date is when the 5-year window ENDS.
+
+      2007-05-29 .. 2008-07-31  ( 1.2y, worst -2.01pp/yr)
+      2017-04-24 .. 2018-08-17  ( 1.3y, worst -0.85pp/yr)
+      2021-02-02 .. 2021-12-03  ( 0.8y, worst -0.97pp/yr)
+      2021-12-22 .. 2026-07-31  ( 4.6y, worst -5.32pp/yr)
+
+      In total 90/60 trailed on 28.9% of all 5-year
+      windows, and those windows are heavily clustered rather
+      than spread evenly -- note the 2021-2026 block, which is
+      the 2022 bond crash working through the trailing window.
+
+============================================================================================
+8. DRAWDOWN ANALYSIS
+============================================================================================
+
+    episode                          window                         100%      1.5x Reconstru Developed
+    Dot-com bust                     2000-03..2002-10          -38.0%    -55.2%    -25.6%      1.5%
+    Global Financial Crisis          2007-10..2009-03          -48.3%    -65.1%    -38.9%    -49.1%
+    Euro crisis                      2011-05..2011-10          -12.4%    -19.3%     -6.5%    -15.1%
+    COVID crash                      2020-02..2020-03          -33.4%    -46.2%    -28.2%    -36.9%
+    2022 stocks-and-bonds selloff    2022-01..2022-10          -20.3%    -28.5%    -26.7%    -13.4%
+    2025 tariff shock                2025-02..2025-04           -5.4%     -9.6%     -3.2%     -1.5%
+
+    full-sample max drawdown                                     -57.0%    -73.3%    -48.8%    -57.8%
+
+    Deepest drawdown episodes, 100% equities vs 90/60:
+
+    100% developed equities
+      2007-11-01 -> 2009-03-09  -57.03%    48.2 months to recover
+      2000-03-27 -> 2002-10-09  -47.97%    34.9 months to recover
+      2020-02-13 -> 2020-03-23  -33.79%     5.1 months to recover
+      2021-11-09 -> 2022-10-12  -26.69%    14.5 months to recover
+    Reconstructed 90/60
+      2007-11-01 -> 2009-03-09  -48.79%    22.8 months to recover
+      2000-03-27 -> 2002-10-09  -36.30%    16.3 months to recover
+      2021-11-08 -> 2022-10-14  -32.04%    21.1 months to recover
+      2020-02-20 -> 2020-03-23  -28.46%     3.7 months to recover
+
+============================================================================================
+9. MARKET REGIMES -- when does 90/60 beat 100% equities?
+============================================================================================
+
+    regime                                          months  equities    90/60  bond leg      diff  90/60 wins
+    A  Equities up (bull months)                       275    47.17%   43.42%     1.85%    -0.23pp       39.3%
+    B  Equities down + yields falling                   78   -36.96%  -25.74%    20.47%    +1.31pp      100.0%
+    C  Equities down + yields rising                    77   -36.05%  -38.28%   -12.03%    -0.29pp       27.3%
+    D  Inflation high (top quintile)                    87    -8.17%   -6.58%     1.17%    +0.12pp       55.2%
+    E  Deflation/disinflation + falling yields         106     5.57%   15.49%    16.65%    +0.72pp       82.1%
+    F  Strong equity bull (top-quartile months)        108    95.70%   85.30%     1.38%    -0.48pp       29.6%
+    G  Stagflation: high inflation + equities down      45   -43.94%  -40.66%    -0.21%    +0.44pp       62.2%
+
+    The first three return columns are annualised WITHIN each bucket:
+    they describe the pace of returns while that state holds, not a
+    holding-period result.  'diff' is the average monthly difference
+    in percentage points, which is the directly interpretable number.
+
+    This 1990-2026 sample contains no true stagflation -- regime G is
+    built from high-inflation months inside a disinflationary era.
+    Section 10's 98-year US sample is the authority on stagflation.
+
+============================================================================================
+10. LONG-RUN US LABORATORY, 1928-2025 (98 years, annual data)
+============================================================================================
+
+The global reconstruction starts in 1990 and the euro curve in 2004, so neither
+covers the 1970s.  Damodaran's annual US series does, and it is the only sample
+here that contains a genuine stagflation.  This is a US-only, annual-frequency
+approximation of the same structure:
+
+    r = 0.90*stocks + 0.10*bills + 0.60*(10y T-bond - bills) - 0.27% costs
+
+It ignores intra-year rebalancing, so it is a check on the ECONOMICS, not a
+substitute for the daily reconstruction.
+
+    period                                yrs  equities    90/60      diff  avg term prem  90/60 wins
+    1928-2025 full                         98    10.02%    9.99%    -0.02pp          1.41%       41.8%
+    1928-1949                              22     4.65%    5.53%    +0.88pp          2.25%       45.5%
+    1950-1969                              20    13.45%   11.45%    -2.00pp         -1.32%       25.0%
+    1970-1981 stagflation & rate spike     12     6.91%    5.31%    -1.60pp         -2.28%       25.0%
+    1982-1999 disinflation bull            18    18.34%   19.28%    +0.94pp          4.67%       55.6%
+    2000-2019                              20     6.00%    8.16%    +2.16pp          3.82%       55.0%
+    2020-2025                               6    14.92%   10.88%    -4.03pp         -3.01%       33.3%
+
+    RISK over the full 98 years -- the return race is a dead heat,
+    so the whole case rests on this half of the table:
+                               equities      90/60
+      CAGR                       10.02%      9.99%
+      annual vol                 19.40%     18.16%
+      Sharpe (annual data)        0.428      0.441
+      max drawdown              -64.77%    -59.74%
+      worst year                -43.84%    -42.41%
+
+    Inflation regimes (US CPI, 1948-2025):
+    inflation in the top quintile          16     5.87%    2.74%    -3.13pp         -4.48%       12.5%
+    inflation below median                 39    13.49%   13.76%    +0.27pp          2.33%       43.6%
+    stagflation: high inflation AND equities down    7   -11.95%  -14.94%    -2.99pp         -7.45%        0.0%
+
+    Worst single years for the 90/60 structure:
+      1931  90/60  -42.41%   equities  -43.84%   bonds  -2.56%   bills  2.31%   diff  +1.42pp
+      1937  90/60  -31.38%   equities  -35.34%   bonds   1.38%   bills  0.28%   diff  +3.95pp
+      2022  90/60  -28.25%   equities  -18.04%   bonds -17.83%   bills  2.09%   diff -10.21pp
+      1974  90/60  -26.31%   equities  -25.90%   bonds   1.99%   bills  7.85%   diff  -0.41pp
+      1930  90/60  -22.43%   equities  -25.12%   bonds   4.54%   bills  4.55%   diff  +2.69pp
+
+============================================================================================
+11. ROBUSTNESS OF THE MODELLING CHOICES
+============================================================================================
+
+    variant                                       90/60 CAGR     vol  Sharpe  vs equities
+    base case (CTD ladder, fund currency weights)       9.27%  13.01%    0.55       +0.78 pp
+    nominal 2/5/10/30 ladder                           9.52%  13.01%    0.56       +1.03 pp
+    currency weights: US only                          9.26%  12.99%    0.55       +0.77 pp
+    currency weights: equal 4-ccy                      9.28%  13.14%    0.54       +0.79 pp
+    currency weights: 1990s Japan-heavy                9.27%  13.03%    0.55       +0.78 pp
+    zero costs (index, not fund)                       9.56%  13.01%    0.57       +1.07 pp
+    costs doubled to 0.54%/yr                          8.98%  13.01%    0.53       +0.49 pp
+
+    100% developed equities: 8.49% CAGR, 14.67% vol, Sharpe 0.45
+
+    Bond-sleeve currency coverage grows with the source curves
+    (BoE gilt par yields start 1993, the ECB euro curve 2004):
+      1990-07-03 .. 1993-10-31: 2 currencies, sleeve excess return +8.31% p.a.
+      1993-11-01 .. 2004-09-06: 3 currencies, sleeve excess return +2.69% p.a.
+      2004-09-07 .. 2026-07-31: 4 currencies, sleeve excess return +1.23% p.a.
+      over 2004-2026 a US-only sleeve returns +1.18% p.a., i.e. the currency mix is
+      worth +0.06pp
+      on the sleeve, +0.04pp at the fund level.
+
+
+Wrote CSV/JSON outputs to C:\Python Datoteke\efficient_core_9060\output

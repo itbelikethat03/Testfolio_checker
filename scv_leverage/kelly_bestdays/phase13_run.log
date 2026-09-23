@@ -1,0 +1,46 @@
+﻿[kd_data] merged daily: 1926-07-01 -> 2026-04-30, n=26,233
+Sweep: 40 leverage levels x 7 X-values x 2 series
+       5,000 paths x 6,569 days each
+
+  mkt X=0    f_kelly= 2.62x   [35s]
+  mkt X=5    f_kelly= 2.47x   [72s]
+  mkt X=10   f_kelly= 2.35x   [107s]
+  mkt X=20   f_kelly= 2.13x   [141s]
+  mkt X=50   f_kelly= 1.56x   [176s]
+  mkt X=100  f_kelly= 0.77x   [212s]
+  mkt X=200  f_kelly= 0.00x   [246s]
+  scv X=0    f_kelly= 2.78x   [281s]
+  scv X=5    f_kelly= 2.64x   [310s]
+  scv X=10   f_kelly= 2.56x   [340s]
+  scv X=20   f_kelly= 2.40x   [369s]
+  scv X=50   f_kelly= 1.96x   [398s]
+  scv X=100  f_kelly= 1.31x   [430s]
+  scv X=200  f_kelly= 0.10x   [464s]
+
+========================================================================================================
+PHASE 13 -- OPTIMAL LEVERAGE vs. NUMBER OF BEST DAYS REMOVED
+========================================================================================================
+
+--- Broad market ---
+    X   f_kelly  f_growth  f_meanlog    f_p5  f_budget  |  medCAGR@growth   p5CAGR@p5  medCAGR@budget
+    0     2.62x     2.70x      2.60x   0.60x     0.90x  |          14.97%       3.84%           9.69%
+    5     2.47x     2.40x      2.50x   0.50x     0.90x  |          13.41%       3.54%           9.12%
+   10     2.35x     2.40x      2.40x   0.30x     0.80x  |          12.33%       3.30%           8.17%
+   20     2.13x     2.10x      2.10x   0.10x     0.80x  |          10.40%       3.12%           7.51%
+   50     1.56x     1.60x      1.50x   0.10x     0.70x  |           6.86%       2.88%           5.70%
+  100     0.77x     0.80x      0.80x   0.10x     0.60x  |           4.13%       2.61%           4.05%
+  200     0.00x     0.10x      0.10x   0.10x     0.50x  |           3.02%       2.21%           2.08%
+
+--- Small-cap value ---
+    X   f_kelly  f_growth  f_meanlog    f_p5  f_budget  |  medCAGR@growth   p5CAGR@p5  medCAGR@budget
+    0     2.78x     2.80x      2.80x   0.80x     0.70x  |          22.92%       4.85%          11.38%
+    5     2.64x     2.70x      2.70x   0.70x     0.70x  |          20.44%       4.40%          10.73%
+   10     2.56x     2.60x      2.50x   0.50x     0.70x  |          18.84%       3.79%          10.25%
+   20     2.40x     2.40x      2.40x   0.40x     0.60x  |          16.69%       3.44%           8.84%
+   50     1.96x     1.90x      1.90x   0.10x     0.60x  |          11.45%       3.02%           7.42%
+  100     1.31x     1.30x      1.30x   0.10x     0.50x  |           6.93%       2.71%           5.40%
+  200     0.10x     0.20x      0.10x   0.10x     0.40x  |           3.27%       2.18%           3.16%
+
+(f_budget = largest f with P(max drawdown <= -50%) <= 25%)
+
+Wrote C:\Python Datoteke\SCV_leverage_analysis\kelly_bestdays\phase13_leverage_sweep.csv and phase13_optimal_leverage.csv   total 464s

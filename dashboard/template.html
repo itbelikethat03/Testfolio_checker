@@ -1,0 +1,2741 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>90/60 and the Kelly Ladder</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* ---------------------------------------------------------------- tokens */
+:root{
+  color-scheme: light;
+  --paper:#faf9f6; --surface:#fefefd; --sunk:#f3f2ec;
+  --ink:#14140f; --ink2:#4b4a44; --muted:#75736b;
+  --rule:#e3e1d8; --rule2:#d2cfc2; --grid:#e9e7de;
+  --accent:#2a78d6; --accent-soft:#e8f0fc;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --pos:#2a78d6; --neg:#e34948; --mid:#f0efec;
+  --shadow:0 1px 2px rgba(20,20,15,.05), 0 8px 24px -16px rgba(20,20,15,.18);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --paper:#131311; --surface:#1b1b19; --sunk:#232320;
+    --ink:#f4f3ee; --ink2:#c3c2b7; --muted:#8e8c84;
+    --rule:#2e2e2a; --rule2:#3d3d38; --grid:#282825;
+    --accent:#5e9df0; --accent-soft:#1c2c42;
+    --good:#0ca30c; --warn:#fab219; --crit:#e05c5c;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+    --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --pos:#3987e5; --neg:#e66767; --mid:#383835;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --paper:#131311; --surface:#1b1b19; --sunk:#232320;
+  --ink:#f4f3ee; --ink2:#c3c2b7; --muted:#8e8c84;
+  --rule:#2e2e2a; --rule2:#3d3d38; --grid:#282825;
+  --accent:#5e9df0; --accent-soft:#1c2c42;
+  --good:#0ca30c; --warn:#fab219; --crit:#e05c5c;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --pos:#3987e5; --neg:#e66767; --mid:#383835;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.7);
+}
+
+/* ----------------------------------------------------------------- base */
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--sans); font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.011em}
+p{margin:0}
+a{color:var(--accent)}
+table{border-collapse:collapse; width:100%}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+
+.wrap{max-width:1180px; margin:0 auto; padding:0 24px}
+.eyebrow{
+  font-size:11px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--muted); font-family:var(--sans);
+}
+.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+.prose{font-family:var(--serif); font-size:16.5px; line-height:1.62; color:var(--ink2); max-width:66ch}
+.prose strong{color:var(--ink); font-weight:600}
+
+/* -------------------------------------------------------------- masthead */
+.masthead{border-bottom:1px solid var(--rule); background:var(--surface)}
+.masthead .wrap{padding-top:34px; padding-bottom:26px}
+.masthead h1{font-size:clamp(28px,4.4vw,42px); line-height:1.08; letter-spacing:-.025em}
+.dek{margin-top:12px; font-family:var(--serif); font-size:17px; line-height:1.55; color:var(--ink2); max-width:60ch}
+.sources{
+  display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;
+}
+.source{
+  flex:1 1 300px; min-width:0; padding:11px 14px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--paper);
+}
+.source .nm{font-size:13px; font-weight:600}
+.source .mt{font-size:11.5px; color:var(--muted); margin-top:3px; font-family:var(--mono)}
+.topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:20px}
+.themebtn{
+  flex:none; font:inherit; font-size:12px; color:var(--ink2); cursor:pointer;
+  background:var(--paper); border:1px solid var(--rule2); border-radius:999px;
+  padding:6px 13px; display:flex; align-items:center; gap:6px;
+}
+.themebtn:hover{border-color:var(--ink2)}
+
+/* -------------------------------------------------------- window picker */
+.winchips{display:flex; gap:6px; flex-wrap:wrap; flex:1 1 auto}
+.chip{
+  font:inherit; font-size:12.5px; cursor:pointer; text-align:left;
+  background:var(--paper); border:1px solid var(--rule2); border-radius:6px;
+  padding:6px 11px; color:var(--ink2); line-height:1.25;
+}
+.chip b{display:block; font-weight:600; color:var(--ink); font-size:12.5px}
+.chip span{font-family:var(--mono); font-size:10.5px; color:var(--muted)}
+.chip:hover{border-color:var(--ink2)}
+.chip[aria-pressed="true"]{
+  background:var(--accent-soft); border-color:var(--accent); color:var(--ink);
+}
+.chip[aria-pressed="true"] span{color:var(--accent)}
+.winwhy{
+  margin-top:10px; font-size:13px; color:var(--ink2); max-width:88ch;
+  display:flex; gap:9px; align-items:flex-start;
+}
+.winwhy::before{
+  content:""; flex:none; width:3px; align-self:stretch; border-radius:2px;
+  background:var(--accent); opacity:.6;
+}
+
+/* --------------------------------------------------------------- section */
+section{padding:44px 0; border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+.sechead{margin-bottom:22px}
+.sechead h2{font-size:23px; margin-top:5px; letter-spacing:-.02em}
+.sechead p{margin-top:9px; font-family:var(--serif); font-size:15.5px; color:var(--ink2); max-width:70ch; line-height:1.58}
+
+/* ----------------------------------------------------------------- cards */
+.panel{
+  background:var(--surface); border:1px solid var(--rule); border-radius:8px;
+  overflow:hidden;
+}
+.panel-hd{
+  display:flex; align-items:baseline; justify-content:space-between; gap:14px;
+  padding:13px 16px; border-bottom:1px solid var(--rule); flex-wrap:wrap;
+}
+.panel-hd h3{font-size:14.5px}
+.panel-hd .sub{font-size:12px; color:var(--muted); margin-top:2px}
+.panel-bd{padding:14px 16px}
+.panel-ft{
+  padding:9px 16px; border-top:1px solid var(--rule); background:var(--sunk);
+  font-size:11.5px; color:var(--muted); line-height:1.5;
+}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:16px}
+.stack{display:flex; flex-direction:column; gap:16px}
+
+/* ------------------------------------------------------------ stat tiles */
+.tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(178px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:8px; overflow:hidden}
+.tile{background:var(--surface); padding:14px 15px}
+.tile .k{font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--muted)}
+.tile .v{font-size:27px; font-weight:600; line-height:1.15; margin-top:7px; letter-spacing:-.02em}
+.tile .n{font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.45}
+
+/* ---------------------------------------------------------------- tables */
+.tw{overflow-x:auto}
+table.dt{font-size:13px; min-width:560px}
+table.dt th{
+  text-align:right; font-weight:600; font-size:10.5px; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--muted); padding:0 10px 7px; white-space:nowrap;
+  border-bottom:1px solid var(--rule2); vertical-align:bottom;
+}
+table.dt th:first-child, table.dt td:first-child{text-align:left; padding-left:0}
+table.dt td{
+  padding:7px 10px; text-align:right; border-bottom:1px solid var(--rule);
+  font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap;
+}
+table.dt td:first-child{font-family:var(--sans); white-space:normal; min-width:190px}
+table.dt tr:last-child td{border-bottom:0}
+table.dt tr.off td{color:var(--muted); background:var(--sunk)}
+table.dt tr.hi td{background:var(--accent-soft)}
+.swatch{
+  display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:8px;
+  vertical-align:baseline; flex:none;
+}
+.pname{display:flex; align-items:baseline; gap:0}
+.pname .t{min-width:0}
+.pname .lbl{font-weight:500}
+.pname .meta{font-size:11px; color:var(--muted); font-family:var(--mono); margin-top:1px}
+.na{font-style:italic; color:var(--muted); font-family:var(--sans)!important; font-size:12px}
+.flag{
+  display:inline-block; font-size:9.5px; font-weight:600; letter-spacing:.05em;
+  text-transform:uppercase; padding:1px 5px; border-radius:3px; margin-left:7px;
+  font-family:var(--sans); vertical-align:1px;
+}
+.flag.live{background:var(--accent-soft); color:var(--accent)}
+.flag.syn{background:var(--sunk); color:var(--muted); border:1px solid var(--rule2)}
+.flag.trunc{background:#fdf3dd; color:#8a6200}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .flag.trunc{background:#3a3018; color:var(--warn)}
+}
+:root[data-theme="dark"] .flag.trunc{background:#3a3018; color:var(--warn)}
+.pos{color:var(--good)} .neg{color:var(--crit)}
+
+/* ---------------------------------------------------------------- charts */
+.chart{width:100%; height:auto; display:block; overflow:visible}
+.chart text{font-family:var(--sans); fill:var(--muted)}
+.ct-tick{font-size:10.5px; font-family:var(--mono)}
+.ct-axis{font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase}
+.ct-lbl{font-size:11px; font-weight:500; font-family:var(--sans)}
+.cgrid{stroke:var(--grid); stroke-width:1}
+.cbase{stroke:var(--rule2); stroke-width:1}
+.cscroll{overflow-x:auto; overflow-y:hidden}
+.cscroll > svg{min-width:520px}
+.legend{display:flex; flex-wrap:wrap; gap:5px 16px; margin-top:10px}
+.lg{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink2);
+  cursor:pointer; user-select:none; border:0; background:none; font-family:var(--sans); padding:1px 0}
+.lg .k{width:13px; height:3px; border-radius:2px; flex:none}
+.lg[aria-pressed="false"]{opacity:.34}
+.lg:hover{color:var(--ink)}
+.tip{
+  position:fixed; z-index:60; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--surface); border:1px solid var(--rule2); border-radius:6px;
+  box-shadow:var(--shadow); padding:9px 11px; font-size:12px; min-width:150px;
+  max-width:280px;
+}
+.tip .th{font-size:11px; color:var(--muted); font-family:var(--mono); margin-bottom:6px}
+.tip .tr{display:flex; align-items:center; gap:8px; justify-content:space-between; line-height:1.6}
+.tip .tr .nm{display:flex; align-items:center; gap:6px; min-width:0}
+.tip .tr .nm i{width:8px; height:8px; border-radius:2px; flex:none; display:block}
+.tip .tr .vl{font-family:var(--mono); font-variant-numeric:tabular-nums; font-weight:500}
+
+/* --------------------------------------------------------------- toolbar */
+.tools{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+.seg{display:flex; border:1px solid var(--rule2); border-radius:6px; overflow:hidden}
+.seg button{
+  font:inherit; font-size:11.5px; padding:4px 10px; cursor:pointer;
+  background:var(--surface); color:var(--ink2); border:0; border-right:1px solid var(--rule2);
+  font-family:var(--sans);
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent); color:#fff; font-weight:500}
+.seg button:hover:not([aria-pressed="true"]){background:var(--sunk)}
+.tvbtn{
+  font:inherit; font-size:11.5px; padding:4px 10px; cursor:pointer; border-radius:6px;
+  background:var(--surface); color:var(--ink2); border:1px solid var(--rule2);
+}
+.tvbtn[aria-pressed="true"]{background:var(--sunk); color:var(--ink); font-weight:500}
+.tvbtn:hover{border-color:var(--ink2)}
+
+/* ----------------------------------------------------------------- notes */
+.callout{
+  border:1px solid var(--rule2); border-left:3px solid var(--warn); border-radius:6px;
+  padding:13px 16px; background:var(--surface); font-size:14px; color:var(--ink2);
+  line-height:1.58;
+}
+.callout.acc{border-left-color:var(--accent)}
+.callout.bad{border-left-color:var(--crit)}
+.callout h4{font-size:13px; margin-bottom:5px; color:var(--ink)}
+.callout p + p{margin-top:8px}
+.ndl{display:grid; grid-template-columns:auto 1fr; gap:7px 16px; font-size:13.5px; align-items:baseline}
+.ndl dt{font-weight:600; color:var(--ink); white-space:nowrap}
+.ndl dd{margin:0; color:var(--ink2)}
+
+footer{padding:30px 0 46px; color:var(--muted); font-size:12.5px; line-height:1.6}
+footer code{font-family:var(--mono); font-size:11.5px; color:var(--ink2)}
+
+/* ------------------------------------------------------------ navigation */
+html{scroll-behavior:smooth; scroll-padding-top:70px}
+[hidden]{display:none!important}
+.navbar{
+  position:sticky; top:0; z-index:30; border-bottom:1px solid var(--rule); box-shadow:var(--shadow);
+  background:color-mix(in srgb, var(--surface) 90%, transparent);
+  -webkit-backdrop-filter:saturate(1.4) blur(8px); backdrop-filter:saturate(1.4) blur(8px);
+}
+.navrow{display:flex; align-items:center; gap:14px; min-height:54px}
+.brand{flex:none; font-weight:600; font-size:14px; color:var(--ink); text-decoration:none; letter-spacing:-.01em}
+.navlinks{position:relative; display:flex; gap:2px; flex:1 1 auto; min-width:0; overflow-x:auto; scrollbar-width:none}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{
+  flex:none; font-size:13px; color:var(--ink2); text-decoration:none; white-space:nowrap;
+  padding:6px 10px; border-radius:6px;
+}
+.navlinks a i{font-style:normal; font-family:var(--mono); font-size:10.5px; color:var(--muted); margin-right:5px}
+.navlinks a:hover{background:var(--sunk); color:var(--ink)}
+.navlinks a[aria-current]{background:var(--accent-soft); color:var(--accent); font-weight:500}
+.navlinks a[aria-current] i{color:var(--accent)}
+.navwin{
+  flex:none; display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+}
+.navwin select{
+  font:inherit; font-size:12.5px; font-weight:500; text-transform:none; letter-spacing:0;
+  color:var(--ink); background:var(--paper); border:1px solid var(--rule2); border-radius:6px;
+  padding:5px 8px; cursor:pointer; max-width:220px;
+}
+.navwin select:hover{border-color:var(--ink2)}
+.sechead .eyebrow{color:var(--accent)}
+.wincard .winchips{gap:8px}
+.wincard .chip{padding:8px 13px}
+.wincard .winwhy{margin-top:12px}
+table.dt tbody tr:not(.off):not(.grp):hover td{background:var(--sunk)}
+table.dt tr.grp td{
+  font-family:var(--sans); font-size:11px; font-weight:600; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--ink); text-align:left; padding-top:14px;
+  border-bottom:1px solid var(--rule2);
+}
+table.dt tr.grp:first-child td{padding-top:4px}
+table.dt th[title]{cursor:help; text-decoration:underline dotted var(--rule2); text-underline-offset:3px}
+.sectools{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:-6px 0 18px}
+table.heat{border-collapse:separate; border-spacing:2px; font-size:11.5px; width:auto}
+table.heat th{font-size:10px; font-weight:600; color:var(--muted); padding:2px 5px;
+  white-space:nowrap; text-align:center; letter-spacing:.03em}
+table.heat th.rh{text-align:right; padding-right:8px}
+table.heat td{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:center;
+  padding:5px 2px; border-radius:3px; min-width:31px; font-size:11px}
+table.heat th{padding:2px 2px}
+table.dt.compact{min-width:0}
+table.dt.compact td, table.dt.compact th{padding-left:6px; padding-right:6px}
+table.dt td .sub2{font-size:10.5px; color:var(--muted); line-height:1.2}
+table.heat td.key{box-shadow:inset 0 0 0 2px var(--ink)}
+.shape{display:inline-block; width:11px; height:11px; flex:none}
+.totop{
+  position:fixed; right:20px; bottom:20px; z-index:40; width:42px; height:42px;
+  border-radius:999px; border:1px solid var(--rule2); background:var(--surface);
+  color:var(--ink2); box-shadow:var(--shadow); cursor:pointer; font-size:17px; line-height:1;
+  opacity:0; pointer-events:none; transform:translateY(6px); transition:opacity .15s, transform .15s;
+}
+.totop.show{opacity:1; pointer-events:auto; transform:none}
+.totop:hover{color:var(--ink); border-color:var(--ink2)}
+
+@media (max-width:720px){
+  .wrap{padding:0 16px}
+  .grid2{grid-template-columns:1fr}
+  section{padding:34px 0}
+  .brand, .navwin, #themelabel{display:none!important}
+  .navrow{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="masthead" id="top">
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Two studies, one comparison surface</div>
+        <h1>90/60 and the Kelly Ladder</h1>
+        <p class="dek">Both studies ask what leverage buys you. One levers <em>bonds</em>
+          inside an equity portfolio and asks whether the term premium pays for it. The
+          other levers <em>equities</em> and asks how much of the growth-optimal answer
+          rests on a handful of days. This page puts their portfolios on one set of axes
+          &mdash; and refuses the comparisons the data cannot support.</p>
+      </div>
+    </div>
+    <div class="sources" id="sources"></div>
+  </div>
+</div>
+
+<nav class="navbar" aria-label="Sections">
+  <div class="wrap navrow">
+    <a class="brand" href="#top">90/60 &middot; Kelly</a>
+    <div class="navlinks" id="navlinks">
+      <a href="#compare"><i>01</i>Matrix</a>
+      <a href="#leverage"><i>02</i>Leverage</a>
+      <a href="#stress"><i>03</i>Stress</a>
+      <a href="#montecarlo"><i>04</i>Monte Carlo</a>
+      <a href="#sensitivity"><i>05</i>Sensitivity</a>
+      <a href="#ntsd"><i>06</i>NTSD</a>
+      <a href="#kellyfrac"><i>07</i>Kelly fractions</a>
+      <a href="#recon"><i>08</i>Real funds</a>
+      <a href="#notes"><i>09</i>Notes</a>
+    </div>
+    <label class="navwin" id="navwin" hidden><span>Window</span><select id="winselect"></select></label>
+    <button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme">
+      <span id="themeicon">◐</span><span id="themelabel">Theme</span>
+    </button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="callout bad" id="stale" hidden style="margin-top:18px"></div>
+
+  <!-- ============================================================ COMPARE -->
+  <section id="compare">
+    <div class="sechead">
+      <div class="eyebrow">01 &middot; The matrix</div>
+      <h2>Every portfolio, scored the same way</h2>
+      <p>Eight portfolios from two studies, all re-scored with a single set of metric
+        definitions (<span class="mono">common/metrics.py</span>) on the window selected below.
+        Sharpe and Sortino are on excess returns over the USD 1-month bill; max drawdown is
+        on daily total-return NAV. A portfolio that does not cover at least 90% of the
+        window is shown as <em>n/a</em> rather than silently swapped for a shorter period.
+        &ldquo;Reconstructed 90/60&rdquo; here is NTSG (equity + <em>bond</em> futures, from 1990);
+        <a href="#ntsd">NTSD, the equity-on-equity 90/60 simulated from 1970, is in section 06</a>.</p>
+    </div>
+    <div class="stack">
+      <div class="panel wincard">
+        <div class="panel-hd">
+          <div><h3>Analysis window</h3>
+            <div class="sub">Drives every chart and table in sections 01 and 02. Also switchable from the top bar.</div></div>
+        </div>
+        <div class="panel-bd">
+          <div class="winchips" id="winchips"></div>
+          <div class="winwhy"><div id="winwhy"></div></div>
+        </div>
+      </div>
+
+      <div class="tiles" id="tiles"></div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Return and risk on the selected window</h3>
+            <div class="sub" id="matrix-sub"></div></div>
+          <div class="tools">
+            <div class="seg" id="sortseg"></div>
+          </div>
+        </div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="matrix"></table></div></div>
+        <div class="panel-ft" id="matrix-ft"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Growth of $1</h3><div class="sub">Log scale, rebased to the window start</div></div>
+            <div class="tools">
+              <div class="seg" id="growthscale"></div>
+              <button class="tvbtn" data-tv="growth" aria-pressed="false" type="button">Table</button>
+            </div>
+          </div>
+          <div class="panel-bd" id="growth"></div>
+          <div class="panel-ft">Monthly resolution. Drawdowns read off this chart are
+            shallower than the daily-computed figures in the matrix above &mdash; a month-end
+            series cannot see an intra-month trough.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Drawdown from previous peak</h3><div class="sub">Month-end, within the selected window</div></div>
+            <button class="tvbtn" data-tv="dd" aria-pressed="false" type="button">Table</button>
+          </div>
+          <div class="panel-bd" id="ddchart"></div>
+          <div class="panel-ft">The peak resets at the window start, so a shorter window
+            shows shallower drawdowns for the same series.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Risk against return</h3>
+            <div class="sub">Every point is direct-labelled &mdash; colour is a convenience, not the encoding</div></div>
+          <div class="tools"><div class="seg" id="scatterx"></div></div>
+        </div>
+        <div class="panel-bd" id="scatter"></div>
+        <div class="panel-ft">Points sit on the window selected above. Portfolios from
+          different universes are plotted together; the axis is shared, the underlying
+          markets are not.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== LEVERAGE -->
+  <section id="leverage">
+    <div class="sechead">
+      <div class="eyebrow">02 &middot; The bridge</div>
+      <h2>The one axis both studies share</h2>
+      <p>The Kelly study sweeps leverage <span class="mono">f</span> on US equities and asks
+        what a growth objective, and what a drawdown budget, each pick. The Efficient Core
+        study holds two portfolios at 1.5&times; notional &mdash; one levering equity, one levering
+        bonds &mdash; and asks which is the better use of the same leverage. Neither study could
+        make this comparison alone.</p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Simulated leverage sweep, with realised portfolios overlaid</h3>
+            <div class="sub" id="lev-sub"></div></div>
+          <div class="tools">
+            <div class="seg" id="levseries"></div>
+            <div class="seg" id="levmetric"></div>
+          </div>
+        </div>
+        <div class="panel-bd" id="levchart"></div>
+        <div class="panel-ft" id="lev-ft"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd"><div><h3>What leverage each objective picks</h3>
+            <div class="sub">Kelly study, by number of best days removed</div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="optlev"></table></div></div>
+          <div class="panel-ft">Risk budget = the largest <span class="mono">f</span> with
+            P(max drawdown &le; &minus;50%) &le; 25% over 25 years. The Kelly study flags the
+            5th-percentile objective as degenerate &mdash; it binds on the grid floor from
+            X&nbsp;=&nbsp;20 onward &mdash; so it is excluded here.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd"><div><h3>Cost of leverage, 90/60</h3>
+            <div class="sub">Extra financing spread applied to the 0.60 notional, 1990&ndash;2026</div></div>
+            <button class="tvbtn" data-tv="fin" aria-pressed="false" type="button">Table</button>
+          </div>
+          <div class="panel-bd" id="finchart"></div>
+          <div class="panel-ft" id="fin-ft"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><div><h3>Does the conclusion survive the modelling choices?</h3>
+          <div class="sub">Efficient Core robustness variants, 1990&ndash;2026</div></div></div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="robust"></table></div></div>
+        <div class="panel-ft">The currency-weight estimate &mdash; the least certain input in the
+          reconstruction &mdash; moves the answer by 0.02pp. Only the ladder duration matters at
+          all, and the base case is the conservative one.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= STRESS -->
+  <section id="stress">
+    <div class="sechead">
+      <div class="eyebrow">03 &middot; When it breaks</div>
+      <h2>Crises, regimes and removed days</h2>
+      <p>Both studies locate a specific failure mode rather than a generic one. For 90/60 it
+        is an inflation shock, where both legs fall together. For the Kelly ladder it is
+        sizing on a stale estimate of a mean that was never well identified.</p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Cumulative return through each crisis</h3>
+            <div class="sub">Efficient Core study &mdash; peak-to-trough episodes, 1990&ndash;2026</div></div>
+          <button class="tvbtn" data-tv="crisis" aria-pressed="false" type="button">Table</button>
+        </div>
+        <div class="panel-bd" id="crisis"></div>
+        <div class="panel-ft" id="crisis-ft"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd"><div><h3>90/60 by market regime</h3>
+            <div class="sub">Monthly buckets, 1990&ndash;2026. Returns annualised <em>within</em> each bucket</div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="regimes"></table></div></div>
+          <div class="panel-ft">These are the pace of returns while a state holds, not a
+            holding-period result. The win-rate column is the share of months in the bucket
+            where 90/60 beat equities.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd"><div><h3>The long US sample, by era</h3>
+            <div class="sub">1928&ndash;2025 annual &mdash; the sample that contains a real stagflation</div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="longus"></table></div></div>
+          <div class="panel-ft">The 1990&ndash;2026 window contains no genuine stagflation; its
+            &ldquo;high inflation&rdquo; months sit inside a disinflationary era. On this
+            question the long sample is the authority.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Removing the best days</h3>
+            <div class="sub">Kelly study &mdash; a sensitivity measurement, not a scenario</div></div>
+          <div class="tools">
+            <div class="seg" id="rmmetric"></div>
+            <button class="tvbtn" data-tv="removal" aria-pressed="false" type="button">Table</button>
+          </div>
+        </div>
+        <div class="panel-bd" id="removal"></div>
+        <div class="panel-ft" id="removal-ft"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== MONTE CARLO -->
+  <section id="montecarlo">
+    <div class="sechead">
+      <div class="eyebrow">04 &middot; Forward distributions</div>
+      <h2>Two block bootstraps, two different answers</h2>
+      <p>Both studies resample history in blocks to preserve the persistence an i.i.d. draw
+        destroys. The Efficient Core study runs it twice on purpose &mdash; once on the global
+        bond-bull window, once on 98 years of US data &mdash; and the two disagree. That
+        disagreement is the result.</p>
+    </div>
+    <div class="stack">
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>P(90/60 beats All World) by horizon</h3>
+              <div class="sub">20,000 paired paths per horizon</div></div>
+            <button class="tvbtn" data-tv="mcprob" aria-pressed="false" type="button">Table</button>
+          </div>
+          <div class="panel-bd" id="mcprob"></div>
+          <div class="panel-ft" id="mcprob-ft"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>The Kelly ladder&rsquo;s tail</h3>
+              <div class="sub">25-year horizon, block-20 bootstrap, X&nbsp;=&nbsp;0</div></div>
+            <div class="tools"><div class="seg" id="mckseries"></div></div>
+          </div>
+          <div class="panel-bd" id="mckelly"></div>
+          <div class="panel-ft" id="mckelly-ft"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>The whole 90/60 result, as a function of the bond term premium</h3>
+            <div class="sub">Sample A resampled with the term premium shifted; everything else unchanged</div></div>
+          <button class="tvbtn" data-tv="mcsens" aria-pressed="false" type="button">Table</button>
+        </div>
+        <div class="panel-bd" id="mcsens"></div>
+        <div class="panel-ft" id="mcsens-ft"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== SENSITIVITY -->
+  <section id="sensitivity">
+    <div class="sechead">
+      <div class="eyebrow">05 &middot; What actually moves the answer</div>
+      <h2>Sensitivity</h2>
+      <p>The 90/60 edge reduces to one identity: 0.60 &times; bond term premium &minus; 0.10 &times;
+        equity risk premium &minus; costs. Because of that 6:1 multiplier, the bond row of the
+        grid decides everything and the equity column barely matters.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-hd"><div><h3>90/60 minus 100% equities</h3>
+          <div class="sub">pp/yr, by assumed bond and equity return</div></div></div>
+        <div class="panel-bd" id="grid"></div>
+        <div class="panel-ft">Moving equities from 4% to 10% changes the answer by 0.6pp.
+          Moving bonds from 0% to 6% changes it by 3.6pp. Financing fixed at 3.44%, costs 0.27%.</div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd"><div><h3>Stock/bond correlation</h3>
+          <div class="sub">What it does, and what it does not, change</div></div></div>
+        <div class="panel-bd" id="corr"></div>
+        <div class="panel-ft" id="corr-ft"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============================================================== NTSD -->
+  <section id="ntsd">
+    <div class="sechead">
+      <div class="eyebrow">06 &middot; A second 90/60, levering equity on equity</div>
+      <h2>NTSD, simulated back to 1970</h2>
+      <p>WisdomTree's Efficient U.S. Plus International Equity fund holds 0.90 US large-cap
+        equity, 0.10 T-bills, and 0.60 notional MSCI EAFE futures, rebalanced quarterly and on a
+        5pp drift. It is the same machine as the NTSG reconstruction above with the bond sleeve
+        replaced by an equity sleeve, so it is simulated with the same engine
+        (<span class="mono">ec_ntsd.py</span>). It sits outside the matrix: the page's palette
+        is validated for eight series, so NTSD is drawn in ink rather than given a ninth hue.</p>
+    </div>
+    <div class="stack">
+      <div class="tiles" id="ntsd-tiles"></div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Growth of $1, 1970&ndash;2026</h3>
+            <div class="sub">Log scale, month-end. Solid = our synthetic, dashed = testfolio NTSDSIM</div></div>
+          <button class="tvbtn" data-tv="ntsdgrowth" aria-pressed="false" type="button">Table</button>
+        </div>
+        <div class="panel-bd" id="ntsd-growth"></div>
+        <div class="panel-ft">The US leg is the Fama-French total market, which ends 2026-04-30; the
+          international leg is testfolio VEASIM. Both NTSD lines are the same fund from two
+          independent constructions &mdash; their closeness is the validation.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><div><h3>Scored on the common window</h3>
+          <div class="sub" id="ntsd-sum-sub"></div></div></div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="ntsd-sum"></table></div></div>
+        <div class="panel-ft">Same <span class="mono">common/metrics.py</span> definitions as the matrix.
+          &ldquo;No costs&rdquo; is the structure alone: no TER, trading cost or financing spread.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd"><div><h3>What the costs are, and what they cost</h3>
+            <div class="sub">Annual rates applied in the simulation</div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="ntsd-costs" style="min-width:0"></table></div>
+            <div class="tw" style="margin-top:14px"><table class="dt" id="ntsd-spread" style="min-width:0"></table></div></div>
+          <div class="panel-ft">The financing spread is the one assumption that matters and the one
+            that cannot be observed directly. Volatility drag is <em>not</em> a separate line: it is
+            already in the compounding, and subtracting it would count it twice.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>The real fund against the model</h3>
+              <div class="sub" id="ntsd-live-sub"></div></div>
+          </div>
+          <div class="panel-bd" id="ntsd-live"></div>
+          <div class="panel-ft" id="ntsd-live-ft"></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="callout acc" id="ntsd-letf"></div>
+        <div class="callout" id="ntsd-caveats"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== KELLY FRAC -->
+  <section id="kellyfrac">
+    <div class="sechead">
+      <div class="eyebrow">07 &middot; Fractional Kelly vs best days</div>
+      <h2>Is Quarter Kelly a stand-in for losing the best days?</h2>
+      <p>Two different ways to be more conservative about the same history.
+        <strong>Fractional Kelly</strong> scales exposure and keeps every day.
+        <strong>Best-day removal</strong> keeps full exposure and deletes the 10, 25 or 100
+        strongest days (ranked on unlevered return, the rest kept in date order). This section
+        tests, across many metrics at once, whether Half or Quarter Kelly ends up looking like
+        Full Kelly with its best days gone. The hypothesis is tested, not assumed.
+        (<span class="mono">kd_phase14_fractions.py</span>)</p>
+    </div>
+    <div class="sectools">
+      <div class="eyebrow">Series</div>
+      <div class="seg" id="kfseries"></div>
+    </div>
+    <div class="stack">
+      <div class="grid2">
+        <div class="callout acc" id="kf-answer"></div>
+        <div class="callout" id="kf-differ"></div>
+      </div>
+
+      <div class="tiles" id="kf-tiles"></div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Growth of $1</h3><div class="sub" id="kf-eq-sub"></div></div>
+          <div class="tools">
+            <div class="seg" id="kfview"></div>
+            <button class="tvbtn" data-tv="kfequity" aria-pressed="false" type="button">Table</button>
+          </div>
+        </div>
+        <div class="panel-bd" id="kf-equity"></div>
+        <div class="panel-ft">Log scale, month-end. Removed days are dropped and the remaining days
+          keep their real dates, so every line spans the same 1926&ndash;2026 calendar. Fixed
+          full-sample f*, daily rebalanced, financed at the T-bill rate, no costs.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Drawdown from previous peak</h3><div class="sub">Monthly worst, same view as above</div></div>
+          </div>
+          <div class="panel-bd" id="kf-dd"></div>
+          <div class="panel-ft">Lower leverage makes drawdowns shallower and shorter. Removing best
+            days makes them <em>longer</em>, because the deleted days are mostly recovery rallies.
+            Every scenario's deepest drawdown is the 1929&ndash;32 crash.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Daily return distribution</h3><div class="sub">Share of days per 0.5pp bin, log scale</div></div>
+          </div>
+          <div class="panel-bd" id="kf-dist"></div>
+          <div class="panel-ft">A lower Kelly fraction narrows the <em>whole</em> distribution, both
+            tails. Removing best days trims only the right tail and leaves the left tail as it
+            is. Returns beyond &plusmn;20% are pooled into the end bins.</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Return against maximum drawdown</h3>
+              <div class="sub">Colour = Kelly fraction, shape = best days removed</div></div>
+            <div class="tools"><div class="seg" id="kfscaty"></div></div>
+          </div>
+          <div class="panel-bd" id="kf-scatter"></div>
+          <div class="panel-ft" id="kf-scatter-ft"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>How much growth came from the best days</h3>
+              <div class="sub">Share of total compounded (log) wealth creation</div></div>
+          </div>
+          <div class="panel-bd" id="kf-share"></div>
+          <div class="panel-ft" id="kf-share-ft"></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>How alike is each pair of scenarios?</h3>
+              <div class="sub">RMS z-scored gap &middot; 0 = identical &middot; darker = more alike</div></div>
+            <div class="tools"><div class="seg" id="kfsimkind"></div><div class="seg" id="kfsimvar"></div></div>
+          </div>
+          <div class="panel-bd"><div class="tw" id="kf-sim"></div></div>
+          <div class="panel-ft" id="kf-sim-ft"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>How many best days would Full Kelly have to lose?</h3>
+              <div class="sub">The X at which Full Kelly minus X best days matches each metric</div></div>
+          </div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="kf-eqx" style="min-width:0"></table></div></div>
+          <div class="panel-ft">Linear interpolation on X = 0, 5, 10, 15, 25, 35, 50, 75, 100, 150, 200,
+            300, 500. &ldquo;Never&rdquo; means no X up to 500 reaches the target. If the two
+            transformations were related, each column would give a similar X.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Which metrics each transformation moves</h3>
+            <div class="sub">% change vs Full Kelly on the original history &middot; blue = better, red = worse</div></div>
+        </div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="kf-finger"></table></div></div>
+        <div class="panel-ft">Sharpe and Sortino are <em>exactly</em> unchanged by the Kelly fraction:
+          levered excess return is f&middot;x, and scaling does not change a ratio. The script asserts this.
+          Max drawdown barely moves under removal only because Full Kelly is already at about &minus;100%.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>Every scenario</h3><div class="sub" id="kf-table-sub"></div></div>
+        </div>
+        <div class="panel-bd"><div class="tw"><table class="dt compact" id="kf-table"></table></div></div>
+        <div class="panel-ft">CAGR = exp(mean log(1+r) &times; obs/yr) &minus; 1 on the retained days, the
+          Phase 4 definition. Final $ = (1+CAGR)<sup>years</sup> from $1 over the unchanged calendar
+          span. Max-DD length runs from peak to recovery.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Walk-forward Kelly leverage</h3>
+              <div class="sub">Month-end expanding-window f*, 10-year warm-up, clipped to 0&ndash;4&times;</div></div>
+          </div>
+          <div class="panel-bd" id="kf-wf"></div>
+          <div class="panel-ft">No look-ahead in the sizing. In a world without the best days, the
+            estimator sees a lower mean and cuts leverage by itself.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd">
+            <div><h3>Sensitivity checks</h3><div class="sub" id="kf-sens-sub"></div></div>
+            <div class="tools"><div class="seg" id="kfsens"></div></div>
+          </div>
+          <div class="panel-bd"><div class="tw"><table class="dt compact" id="kf-sens"></table></div></div>
+          <div class="panel-ft" id="kf-sens-ft"></div>
+        </div>
+      </div>
+
+      <div class="callout" id="kf-limits"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== RECONSTRUCTIONS -->
+  <section id="recon">
+    <div class="sechead">
+      <div class="eyebrow">08 &middot; Real funds, rebuilt</div>
+      <h2>Leveraged and return-stacked ETFs, checked against the live fund</h2>
+      <p>Each fund's structure (from its prospectus) is run on the general engine
+        (<span class="mono">common/backtest.py</span>) twice: once from ETF proxies over the
+        fund's own life, compared with the real fund's total return, and once on the longest
+        research history available. The live gap is the test of the structure; the history only
+        means anything for a fund whose live gap is small.</p>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="panel-hd"><div><h3>Live validation</h3>
+          <div class="sub">Model built from ETF proxies (expense ratios added back) vs the real fund</div></div></div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="recon-live"></table></div></div>
+        <div class="panel-ft" id="recon-live-ft"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <div><h3>The same structures over the long run</h3>
+            <div class="sub" id="recon-growth-sub"></div></div>
+          <div class="tools"><div class="seg" id="reconfund"></div></div>
+        </div>
+        <div class="panel-bd" id="recon-growth"></div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="recon-hist"></table></div></div>
+        <div class="panel-ft">testfolio conventions (fixed 252 annualisation, 365.25-day CAGR,
+          1-month bill as the risk-free rate). Each row runs on its own window, so the rows are not
+          comparable with each other; compare a fund with itself, or use the backtester on one
+          shared window.</div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-hd"><div><h3>What leverage costs</h3>
+            <div class="sub">Financing presets in <span class="mono">common/leverage.py</span></div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="recon-fin" style="min-width:0"></table></div>
+            <div class="tw" style="margin-top:14px"><table class="dt" id="recon-letf" style="min-width:0"></table></div></div>
+          <div class="panel-ft">The leveraged-ETF spread is fitted, not assumed: it is the spread over
+            fed funds that makes a model of SSO and UPRO built from SPY match the live funds. Borrowing is
+            charged at fed funds, lending (cash) earns the T-bill: the two were ~0.33pp/yr apart before 2009.</div>
+        </div>
+        <div class="panel">
+          <div class="panel-hd"><div><h3>How much small value could you actually get?</h3>
+            <div class="sub">Real funds vs Ken French SMALL HiBM on the same dates</div></div></div>
+          <div class="panel-bd"><div class="tw"><table class="dt" id="recon-scv" style="min-width:0"></table></div></div>
+          <div class="panel-ft">The research portfolio holds microcaps no fund can trade. The drag is the
+            haircut <span class="mono">kd_data.SCV_HAIRCUT</span> can apply to the Kelly study.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== NOTES -->
+  <section id="notes">
+    <div class="sechead">
+      <div class="eyebrow">09 &middot; Reading these together</div>
+      <h2>What the combination does and does not license</h2>
+    </div>
+    <div class="stack">
+      <div class="grid2">
+        <div class="callout bad">
+          <h4>These portfolios are not interchangeable</h4>
+          <p>The Efficient Core series are <strong>developed-market, USD, 1990&ndash;2026</strong>.
+            The Kelly series are <strong>US-only research portfolios, 1926&ndash;2026</strong>,
+            gross of every cost. Scoring them with the same function makes the
+            <em>metrics</em> comparable; it does not make the <em>markets</em> comparable.</p>
+          <p>The one case where this bites hardest: US small-cap value carries no cost drag at
+            all. The Kelly study's own <span class="mono">dfsvx_compare.py</span> puts the
+            implied drag at <strong>&asymp;1.09%/yr</strong>, and its +0.128 daily
+            autocorrelation inflates measured geometric growth further. Every US small-value
+            figure on this page is optimistic by at least that much.</p>
+        </div>
+        <div class="callout">
+          <h4>Best-day removal is a counterfactual, not a forecast</h4>
+          <p>Selecting &ldquo;the best days&rdquo; uses full-sample look-ahead by construction.
+            It measures how sensitive a mean-driven estimator is to positive-tail
+            observations &mdash; nothing more.</p>
+          <p>The scenario is also internally incoherent: <strong>95% of the market's 20 best
+            days occurred inside a drawdown deeper than 20%</strong>, and 45% fell within ten
+            trading days of one of the 20 worst days. A world without the best days but with
+            the worst days intact could not have existed.</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd"><div><h3>Portfolio definitions</h3>
+          <div class="sub">What each row on this page actually holds</div></div></div>
+        <div class="panel-bd"><div class="tw"><table class="dt" id="defs"></table></div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="callout acc">
+          <h4>Where the two studies agree</h4>
+          <p>Both land on the same structural point from opposite directions: <strong>leverage
+            applied to a low-volatility, low-correlation leg is cheap in risk terms; leverage
+            applied to the volatile leg is expensive.</strong> The Efficient Core study
+            measures it as variance drag &mdash; 1.5&times; equity loses 1.89pp/yr to it against
+            90/60's 0.45pp. The Kelly study measures it as a drawdown budget &mdash; small-cap
+            value earns a <em>higher</em> growth-optimal leverage (2.78&times; vs 2.62&times;) but
+            a <em>lower</em> risk-budgeted one (0.70&times; vs 0.90&times;), because its
+            volatility breaches the budget sooner.</p>
+        </div>
+        <div class="callout acc">
+          <h4>And where they point in opposite directions</h4>
+          <p>The Efficient Core study's best risk-adjusted result over 36 years did not come
+            from leverage at all &mdash; developed small-cap value returned a higher CAGR
+            (10.90%) and a higher Sharpe (0.69) than the 90/60 structure. The Kelly study
+            then shows that the same factor, in the US, carries the
+            <em>lower</em> drawdown-budgeted leverage of the two series it tests. Read
+            together: the factor is the better unlevered holding and the worse thing to
+            lever.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p id="footmeta"></p>
+    <p style="margin-top:9px">Rebuild with <code>python run.py</code> in the
+      <code>portfolio_suite</code> folder. Source reports:
+      <code>efficient_core\output\REPORT.md</code>,
+      <code>scv_leverage\kelly_bestdays\REPORT.md</code>, and NTSD outputs in
+      <code>efficient_core\output\ntsd\</code>.</p>
+  </footer>
+</div>
+
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+<button class="totop" id="totop" type="button" aria-label="Back to top">↑</button>
+
+<script id="payload" type="application/json">__DATA__</script>
+<script>
+"use strict";
+const D = JSON.parse(document.getElementById("payload").textContent);
+const P = D.portfolios, BY = Object.fromEntries(P.map(p => [p.id, p]));
+const $ = s => document.querySelector(s);
+
+/* ------------------------------------------------------------ formatting */
+const pct  = (x, d=2) => x==null ? "–" : (x*100).toFixed(d) + "%";
+const pp   = (x, d=2) => x==null ? "–" : (x>=0?"+":"") + x.toFixed(d) + "pp";
+const ppd  = (x, d=2) => x==null ? "–" : (x>=0?"+":"") + (x*100).toFixed(d) + "pp";
+const num  = (x, d=2) => x==null ? "–" : x.toFixed(d);
+const mult = (x, d=2) => x==null ? "–" : x.toFixed(d) + "×";
+const yr   = s => s ? s.slice(0,4) : "";
+const sgn  = (x, f) => `<span class="${x==null?"":x>=0?"pos":"neg"}">${f(x)}</span>`;
+const esc  = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const col  = slot => `var(--s${slot})`;
+
+/* ------------------------------------------------------------- SVG chart */
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent){
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) if (attrs[k] != null) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function niceTicks(lo, hi, n=5){
+  if (!(isFinite(lo) && isFinite(hi)) || lo === hi) return [lo];
+  const raw = (hi-lo)/n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw/mag, step = (norm>=7.5?10:norm>=3.5?5:norm>=1.5?2:1)*mag;
+  const out = []; for (let v=Math.ceil(lo/step)*step; v<=hi+step*1e-9; v+=step) out.push(+v.toFixed(10));
+  return out;
+}
+/* A plot frame: linear x/y, ticks, gridlines, axis titles. Returns scales. */
+function frame(host, cfg){
+  host.innerHTML = "";
+  const W = cfg.w || 760, H = cfg.h || 340;
+  const m = Object.assign({t:14, r:18, b:42, l:58}, cfg.m||{});
+  const box = document.createElement("div");
+  box.className = "cscroll"; host.appendChild(box);
+  const svg = el("svg", {viewBox:`0 0 ${W} ${H}`, class:"chart",
+                         preserveAspectRatio:"xMidYMid meet", role:"img",
+                         "aria-label":cfg.aria||""}, box);
+  const iw = W-m.l-m.r, ih = H-m.t-m.b;
+  const [x0,x1] = cfg.xd, [y0,y1] = cfg.yd;
+  const lg = cfg.ylog;
+  const ly = v => Math.log10(Math.max(v, 1e-9));
+  const sx = v => m.l + (iw * (v-x0)) / ((x1-x0)||1);
+  const sy = lg
+    ? v => m.t + ih - (ih * (ly(v)-ly(y0))) / ((ly(y1)-ly(y0))||1)
+    : v => m.t + ih - (ih * (v-y0)) / ((y1-y0)||1);
+
+  const g = el("g", {}, svg);
+  const yt = cfg.yticks || niceTicks(y0, y1, cfg.yn||5);
+  yt.forEach(v => {
+    if (v < y0 - 1e-12 || v > y1 + 1e-12) return;
+    const y = sy(v);
+    el("line", {x1:m.l, x2:W-m.r, y1:y, y2:y, class:"cgrid"}, g);
+    const t = el("text", {x:m.l-9, y:y+3.5, class:"ct-tick", "text-anchor":"end"}, g);
+    t.textContent = (cfg.yfmt||num)(v);
+  });
+  const xt = cfg.xticks || niceTicks(x0, x1, cfg.xn||6);
+  xt.forEach(v => {
+    if (v < x0 - 1e-9 || v > x1 + 1e-9) return;
+    const x = sx(v);
+    if (cfg.xgrid !== false) el("line", {x1:x, x2:x, y1:m.t, y2:m.t+ih, class:"cgrid"}, g);
+    const t = el("text", {x, y:H-m.b+17, class:"ct-tick", "text-anchor":"middle"}, g);
+    t.textContent = (cfg.xfmt||num)(v);
+  });
+  el("line", {x1:m.l, x2:W-m.r, y1:m.t+ih, y2:m.t+ih, class:"cbase"}, g);
+  if (cfg.zero && y0 < 0 && y1 > 0)
+    el("line", {x1:m.l, x2:W-m.r, y1:sy(0), y2:sy(0), class:"cbase"}, g);
+  if (cfg.ylab){
+    const t = el("text", {class:"ct-axis", "text-anchor":"middle",
+      transform:`translate(13,${m.t+ih/2}) rotate(-90)`}, g);
+    t.textContent = cfg.ylab;
+  }
+  if (cfg.xlab){
+    const t = el("text", {x:m.l+iw/2, y:H-4, class:"ct-axis", "text-anchor":"middle"}, g);
+    t.textContent = cfg.xlab;
+  }
+  return {svg, g, sx, sy, m, iw, ih, W, H};
+}
+function path(g, pts, color, width=2, dash){
+  if (!pts.length) return null;
+  const d = pts.map((p,i) => (i?"L":"M") + p[0].toFixed(2) + " " + p[1].toFixed(2)).join(" ");
+  return el("path", {d, fill:"none", stroke:color, "stroke-width":width,
+    "stroke-linejoin":"round", "stroke-linecap":"round",
+    "stroke-dasharray":dash, "vector-effect":"non-scaling-stroke"}, g);
+}
+/* legend with per-series mute toggles */
+function legend(host, items, onToggle){
+  const box = document.createElement("div");
+  box.className = "legend";
+  items.forEach(it => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "lg";
+    b.setAttribute("aria-pressed", it.on === false ? "false" : "true");
+    b.innerHTML = `<span class="k" style="background:${it.color}"></span>${esc(it.name)}`;
+    if (onToggle) b.onclick = () => {
+      const on = b.getAttribute("aria-pressed") === "true";
+      b.setAttribute("aria-pressed", on ? "false" : "true");
+      onToggle(it.id, !on);
+    };
+    else b.style.cursor = "default";
+    box.appendChild(b);
+  });
+  host.appendChild(box);
+  return box;
+}
+/* shared tooltip */
+const TIP = $("#tip");
+function showTip(ev, html){
+  TIP.innerHTML = html; TIP.style.opacity = "1";
+  const r = TIP.getBoundingClientRect();
+  let x = ev.clientX + 14, y = ev.clientY - r.height/2;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14;
+  TIP.style.left = Math.max(8, x) + "px";
+  TIP.style.top  = Math.min(Math.max(8, y), innerHeight - r.height - 8) + "px";
+}
+const hideTip = () => { TIP.style.opacity = "0"; };
+function tipRows(title, rows){
+  return `<div class="th">${esc(title)}</div>` + rows.map(r =>
+    `<div class="tr"><span class="nm">${r.color?`<i style="background:${r.color}"></i>`:""}${esc(r.name)}</span>
+     <span class="vl">${r.value}</span></div>`).join("");
+}
+/* crosshair layer for time-series charts */
+function crosshair(F, xs, series, fmtX, fmtV){
+  const line = el("line", {y1:F.m.t, y2:F.m.t+F.ih, class:"cbase", opacity:0}, F.g);
+  const dots = series.map(s => el("circle", {r:3.5, fill:s.color, stroke:"var(--surface)",
+    "stroke-width":2, opacity:0}, F.g));
+  const hit = el("rect", {x:F.m.l, y:F.m.t, width:F.iw, height:F.ih,
+    fill:"transparent", style:"cursor:crosshair"}, F.g);
+  hit.addEventListener("pointermove", ev => {
+    const r = F.svg.getBoundingClientRect();
+    const vx = ((ev.clientX - r.left) / r.width * F.W - F.m.l) / F.iw;
+    let best = 0, bd = Infinity;
+    xs.forEach((v,i) => { const d = Math.abs(F.sx(v) - (F.m.l + vx*F.iw)); if (d < bd){bd = d; best = i;} });
+    const X = F.sx(xs[best]);
+    line.setAttribute("x1", X); line.setAttribute("x2", X); line.setAttribute("opacity", .55);
+    const rows = [];
+    series.forEach((s,k) => {
+      const v = s.values[best];
+      if (v == null || !isFinite(v) || s.muted){ dots[k].setAttribute("opacity", 0); return; }
+      dots[k].setAttribute("cx", X); dots[k].setAttribute("cy", F.sy(v));
+      dots[k].setAttribute("opacity", 1);
+      rows.push({name:s.name, color:s.color, value:fmtV(v)});
+    });
+    if (rows.length) showTip(ev, tipRows(fmtX(xs[best]), rows)); else hideTip();
+  });
+  hit.addEventListener("pointerleave", () => {
+    hideTip(); line.setAttribute("opacity", 0); dots.forEach(d => d.setAttribute("opacity", 0));
+  });
+}
+/* generic table view toggle */
+function tableView(key, host, build){
+  const btn = document.querySelector(`[data-tv="${key}"]`);
+  if (!btn) return;
+  btn.onclick = () => {
+    const on = btn.getAttribute("aria-pressed") === "true";
+    btn.setAttribute("aria-pressed", on ? "false" : "true");
+    host.dataset.tv = on ? "" : "1";
+    build();
+  };
+}
+function segment(host, opts, cur, onPick){
+  host.innerHTML = "";
+  opts.forEach(o => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = o.label;
+    b.setAttribute("aria-pressed", o.id === cur ? "true" : "false");
+    b.onclick = () => onPick(o.id);
+    host.appendChild(b);
+  });
+}
+
+/* ============================================================ STATE ===== */
+const S = {
+  win: "recon",
+  sort: "cagr",
+  growthLog: true,
+  scatterX: "vol",
+  muted: new Set(),
+  levSeries: "mkt",
+  levMetric: "cagr_median",
+  rmMetric: "kelly_emp",
+  mckSeries: "mkt",
+};
+const winDef = () => D.windows.find(w => w.id === S.win);
+const scored = () => D.scored[S.win];
+const rowOf = id => scored().find(r => r.id === id);
+const liveRows = () => scored().filter(r => r.status === "ok");
+const livePorts = () => P.filter(p => rowOf(p.id) && rowOf(p.id).status === "ok");
+
+/* ============================================================ MASTHEAD == */
+function renderSources(){
+  $("#sources").innerHTML = `
+    <div class="source">
+      <div class="nm">Do levered bonds pay?</div>
+      <div class="mt">efficient_core · ${D.meta.ec_window[0]} → ${D.meta.ec_window[1]} · ${D.meta.ec_n.toLocaleString()} daily obs</div>
+    </div>
+    <div class="source">
+      <div class="nm">How much of Kelly rests on a handful of days?</div>
+      <div class="mt">scv_leverage · ${D.meta.kd_window[0]} → ${D.meta.kd_window[1]} · ${D.meta.kd_n.toLocaleString()} daily obs</div>
+    </div>`;
+  $("#footmeta").textContent =
+    `Built ${D.meta.generated} from the two studies' own output files. A portfolio is scored `
+    + `on a window only when it covers at least ${(D.meta.min_coverage*100).toFixed(0)}% of it.`;
+}
+
+/* ============================================================ WINDOW BAR  */
+function renderWindows(){
+  const host = $("#winchips"); host.innerHTML = "";
+  D.windows.forEach(w => {
+    const n = D.scored[w.id].filter(r => r.status === "ok").length;
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip";
+    b.setAttribute("aria-pressed", w.id === S.win ? "true" : "false");
+    b.innerHTML = `<b>${esc(w.label)}</b><span>${esc(w.sub)} · ${n} of ${P.length} scored</span>`;
+    b.onclick = () => pickWindow(w.id);
+    host.appendChild(b);
+  });
+  const sel = $("#winselect");
+  sel.innerHTML = D.windows.map(w =>
+    `<option value="${esc(w.id)}"${w.id === S.win ? " selected" : ""}>${esc(w.label)} · ${esc(w.sub)}</option>`).join("");
+  sel.onchange = () => pickWindow(sel.value);
+  $("#winwhy").innerHTML = `<strong>${esc(winDef().label)}</strong> — ${esc(winDef().why)}`;
+}
+
+/* ============================================================ TILES ===== */
+function renderTiles(){
+  const h = D.ec.headline, rows = liveRows();
+  const best = k => rows.filter(r => r[k] != null).sort((a,b) => b[k]-a[k])[0];
+  const bs = best("sharpe"), bc = best("cagr");
+  const shallow = rows.filter(r => r.maxdd != null).sort((a,b) => b.maxdd-a.maxdd)[0];
+  const w = winDef();
+  const tile = (k, v, n) => `<div class="tile"><div class="k">${k}</div>
+    <div class="v">${v}</div><div class="n">${n}</div></div>`;
+  $("#tiles").innerHTML =
+    tile("Portfolios scored", `${rows.length}<span style="font-size:16px;color:var(--muted)">/${P.length}</span>`,
+         `${esc(w.sub)} — ${P.length-rows.length} do not span this window`)
+  + tile("Best Sharpe", bs ? num(bs.sharpe) : "–",
+         bs ? esc(BY[bs.id].label) : "")
+  + tile("Best CAGR", bc ? pct(bc.cagr) : "–",
+         bc ? esc(BY[bc.id].label) : "")
+  + tile("Shallowest drawdown", shallow ? pct(shallow.maxdd,1) : "–",
+         shallow ? esc(BY[shallow.id].label) : "")
+  + tile("Bond term premium", pct(h.bond_term_premium),
+         `Measured 1990–2026. Break-even is 1.28%/yr`)
+  + tile("Today’s term premium", pct(h.fwd_ladder_yield - h.fwd_short_rate),
+         `${pct(h.fwd_ladder_yield)} ladder − ${pct(h.fwd_short_rate)} short — below break-even`);
+}
+
+/* ============================================================ MATRIX ==== */
+const COLS = [
+  {k:"cagr",    h:"CAGR",     f:v => pct(v)},
+  {k:"vol",     h:"Vol",      f:v => pct(v)},
+  {k:"sharpe",  h:"Sharpe",   f:v => num(v)},
+  {k:"sortino", h:"Sortino",  f:v => num(v)},
+  {k:"maxdd",   h:"Max DD",   f:v => pct(v,1)},
+  {k:"calmar",  h:"Calmar",   f:v => num(v)},
+  {k:"worst_year", h:"Worst yr", f:v => pct(v,1)},
+];
+function renderMatrix(){
+  const rows = scored();
+  const ok = rows.filter(r => r.status === "ok");
+  const order = [...P].sort((a,b) => {
+    const ra = rowOf(a.id), rb = rowOf(b.id);
+    const oa = ra && ra.status === "ok", ob = rb && rb.status === "ok";
+    if (oa !== ob) return oa ? -1 : 1;
+    if (!oa) return a.slot - b.slot;
+    const va = ra[S.sort], vb = rb[S.sort];
+    if (va == null) return 1; if (vb == null) return -1;
+    return S.sort === "maxdd" ? vb - va : vb - va;
+  });
+  const bestOf = {};
+  COLS.forEach(c => {
+    const vals = ok.map(r => r[c.k]).filter(v => v != null);
+    if (vals.length) bestOf[c.k] = c.k === "vol" ? Math.min(...vals) : Math.max(...vals);
+  });
+
+  let html = `<thead><tr><th>Portfolio</th><th>Covered</th>`
+    + COLS.map(c => `<th>${c.h}</th>`).join("") + `</tr></thead><tbody>`;
+  order.forEach(p => {
+    const r = rowOf(p.id) || {status:"absent"};
+    const kindFlag = p.kind === "live fund" ? `<span class="flag live">live</span>`
+                   : p.kind === "synthetic" ? `<span class="flag syn">synthetic</span>` : "";
+    const name = `<div class="pname"><span class="swatch" style="background:${col(p.slot)}"></span>
+      <span class="t"><span class="lbl">${esc(p.label)}</span>${kindFlag}
+      <div class="meta">${esc(p.universe)}</div></span></div>`;
+    if (r.status !== "ok"){
+      const why = r.partial_start
+        ? `n/a — only ${yr(r.partial_start)}–${yr(r.partial_end)} (${(r.coverage*100).toFixed(0)}% of window)`
+        : `n/a — series does not span this window`;
+      html += `<tr class="off"><td>${name}</td><td colspan="${COLS.length+1}" class="na">${why}</td></tr>`;
+      return;
+    }
+    const tr = r.truncated ? `<span class="flag trunc">short</span>` : "";
+    html += `<tr><td>${name}</td>`
+      + `<td>${yr(r.start)}–${yr(r.end)} <span style="color:var(--muted)">${num(r.years,1)}y</span>${tr}</td>`
+      + COLS.map(c => {
+          const v = r[c.k];
+          const isBest = v != null && bestOf[c.k] != null && Math.abs(v-bestOf[c.k]) < 1e-12;
+          return `<td>${isBest ? `<strong>${c.f(v)}</strong>` : c.f(v)}</td>`;
+        }).join("") + `</tr>`;
+  });
+  $("#matrix").innerHTML = html + `</tbody>`;
+
+  const w = winDef();
+  $("#matrix-sub").textContent = `${w.start} → ${w.end} · sorted by ${COLS.find(c=>c.k===S.sort).h}`;
+  const trunc = ok.filter(r => r.truncated).map(r => BY[r.id].label);
+  $("#matrix-ft").innerHTML =
+    `Bold marks the best value in a column among the scored rows. `
+    + (trunc.length ? `<strong>Short</strong> marks a series that spans the window but stops before its
+       edge: ${esc(trunc.join(", "))} — the Kelly data ends ${D.meta.kd_window[1]}, the Efficient
+       Core data ${D.meta.ec_window[1]}. ` : "")
+    + `Worst year is the worst complete calendar year inside the window.`;
+
+  segment($("#sortseg"), COLS.filter(c => ["cagr","sharpe","maxdd"].includes(c.k))
+    .map(c => ({id:c.k, label:c.h})), S.sort, id => { S.sort = id; renderMatrix(); });
+}
+
+/* ============================================================ PANEL SLICE */
+function slice(){
+  const w = winDef(), d = D.panel.dates;
+  let i0 = d.findIndex(x => x >= w.start);
+  let i1 = d.length - 1; while (i1 > 0 && d[i1] > w.end) i1--;
+  if (i0 < 0) i0 = 0;
+  return {i0, i1, dates:d.slice(i0, i1+1)};
+}
+function navOf(id, i0, i1){
+  const r = D.panel.series[id]; if (!r) return null;
+  const out = []; let v = 1, started = false;
+  for (let i = i0; i <= i1; i++){
+    const x = r[i];
+    if (x == null){ out.push(started ? v : null); continue; }
+    if (!started){ started = true; out.push(1); v = 1; continue; }
+    v *= (1 + x); out.push(v);
+  }
+  return started ? out : null;
+}
+const toDate = s => new Date(s + "T00:00:00Z").getTime();
+const fmtMonth = t => { const d = new Date(t);
+  return d.toLocaleString("en", {month:"short", year:"numeric", timeZone:"UTC"}); };
+const fmtYear = t => String(new Date(t).getUTCFullYear());
+
+/* ============================================================ GROWTH ==== */
+function renderGrowth(){
+  const host = $("#growth");
+  const {i0, i1, dates} = slice();
+  const xs = dates.map(toDate);
+  const ss = livePorts().map(p => ({
+    id:p.id, name:p.short, color:col(p.slot), slot:p.slot,
+    values:navOf(p.id, i0, i1), muted:S.muted.has(p.id)
+  })).filter(s => s.values);
+
+  if (host.dataset.tv){
+    const rows = ss.map(s => {
+      const last = [...s.values].reverse().find(v => v != null);
+      return `<tr><td><span class="swatch" style="background:${s.color}"></span>${esc(BY[s.id].label)}</td>
+        <td>${last==null?"–":last.toFixed(2)+"×"}</td>
+        <td>${pct(rowOf(s.id).cagr)}</td></tr>`;
+    }).join("");
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Portfolio</th>
+      <th>Growth of $1</th><th>CAGR</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return;
+  }
+
+  const vis = ss.filter(s => !s.muted);
+  const all = vis.flatMap(s => s.values.filter(v => v != null && v > 0));
+  if (!all.length){ host.innerHTML = `<p class="na" style="padding:40px 0;text-align:center">No series on this window.</p>`; return; }
+  let lo = Math.min(...all), hi = Math.max(...all);
+  const log = S.growthLog && lo > 0 && hi/lo > 3;
+  if (log){ lo = Math.pow(10, Math.floor(Math.log10(lo))); hi = Math.pow(10, Math.ceil(Math.log10(hi))); }
+  else { const pad = (hi-lo)*0.06 || .1; lo = Math.max(0, lo-pad); hi += pad; }
+
+  let yticks = null;
+  if (log){
+    yticks = [];
+    for (let e = Math.log10(lo); e <= Math.log10(hi)+1e-9; e++)
+      for (const m of [1,2,5]){ const v = m*Math.pow(10,e); if (v>=lo && v<=hi) yticks.push(v); }
+  }
+  const F = frame(host, {w:760, h:340, xd:[xs[0], xs[xs.length-1]], yd:[lo,hi],
+    ylog:log, yticks, yfmt:v => (v>=10?v.toFixed(0):v.toFixed(v<1?2:1))+"×",
+    xticks:niceTicks(xs[0], xs[xs.length-1], 6), xfmt:fmtYear, xgrid:false,
+    ylab:log ? "Growth of $1 (log)" : "Growth of $1",
+    aria:"Growth of one dollar for each portfolio over the selected window"});
+
+  ss.forEach(s => {
+    if (s.muted) return;
+    const pts = []; let run = [];
+    s.values.forEach((v,i) => {
+      if (v == null || v <= 0){ if (run.length > 1) pts.push(run); run = []; return; }
+      run.push([F.sx(xs[i]), F.sy(v)]);
+    });
+    if (run.length > 1) pts.push(run);
+    pts.forEach(seg => path(F.g, seg, s.color, 2));
+    const last = pts[pts.length-1];
+    if (last){
+      const [x,y] = last[last.length-1];
+      el("circle", {cx:x, cy:y, r:3.2, fill:s.color, stroke:"var(--surface)", "stroke-width":2}, F.g);
+    }
+  });
+  crosshair(F, xs, ss, fmtMonth, v => v.toFixed(2)+"×");
+  legend(host, ss.map(s => ({id:s.id, name:BY[s.id].label, color:s.color, on:!s.muted})),
+    id => { S.muted.has(id) ? S.muted.delete(id) : S.muted.add(id); renderGrowth(); renderDD(); });
+
+  segment($("#growthscale"), [{id:"log",label:"Log"},{id:"lin",label:"Linear"}],
+    S.growthLog ? "log" : "lin", id => { S.growthLog = id === "log"; renderGrowth(); });
+}
+
+/* ============================================================ DRAWDOWN == */
+function renderDD(){
+  const host = $("#ddchart");
+  const {i0, i1, dates} = slice();
+  const xs = dates.map(toDate);
+  const ss = livePorts().map(p => {
+    const nav = navOf(p.id, i0, i1); if (!nav) return null;
+    let peak = -Infinity;
+    const dd = nav.map(v => { if (v == null) return null; peak = Math.max(peak, v); return v/peak - 1; });
+    return {id:p.id, name:p.short, color:col(p.slot), values:dd, muted:S.muted.has(p.id)};
+  }).filter(Boolean);
+
+  if (host.dataset.tv){
+    const rows = ss.map(s => {
+      const m = Math.min(...s.values.filter(v => v != null));
+      return `<tr><td><span class="swatch" style="background:${s.color}"></span>${esc(BY[s.id].label)}</td>
+        <td>${pct(m,1)}</td><td>${pct(rowOf(s.id).maxdd,1)}</td></tr>`;
+    }).join("");
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Portfolio</th>
+      <th>Max DD (monthly)</th><th>Max DD (daily)</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return;
+  }
+
+  const vis = ss.filter(s => !s.muted).flatMap(s => s.values.filter(v => v != null));
+  if (!vis.length){ host.innerHTML = ""; return; }
+  const lo = Math.min(...vis);
+  const F = frame(host, {w:760, h:340, xd:[xs[0], xs[xs.length-1]], yd:[Math.floor(lo*20)/20, 0],
+    yfmt:v => (v*100).toFixed(0)+"%", xticks:niceTicks(xs[0], xs[xs.length-1], 6),
+    xfmt:fmtYear, xgrid:false, ylab:"Drawdown",
+    aria:"Drawdown from previous peak for each portfolio"});
+  ss.forEach(s => {
+    if (s.muted) return;
+    const pts = s.values.map((v,i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean);
+    path(F.g, pts, s.color, 1.75);
+  });
+  crosshair(F, xs, ss, fmtMonth, v => pct(v,1));
+  legend(host, ss.map(s => ({id:s.id, name:BY[s.id].label, color:s.color, on:!s.muted})),
+    id => { S.muted.has(id) ? S.muted.delete(id) : S.muted.add(id); renderGrowth(); renderDD(); });
+}
+
+/* ============================================================ SCATTER === */
+function renderScatter(){
+  const host = $("#scatter");
+  const key = S.scatterX;
+  const pts = livePorts().map(p => {
+    const r = rowOf(p.id);
+    return {p, x:key === "vol" ? r.vol : Math.abs(r.maxdd), y:r.cagr, r};
+  }).filter(d => d.x != null && d.y != null);
+  if (!pts.length){ host.innerHTML = ""; return; }
+
+  const xs = pts.map(d => d.x), ys = pts.map(d => d.y);
+  const xpad = (Math.max(...xs)-Math.min(...xs) || .05) * .22;
+  const ypad = (Math.max(...ys)-Math.min(...ys) || .02) * .30;
+  const F = frame(host, {w:760, h:390, m:{t:16,r:26,b:46,l:62},
+    xd:[Math.max(0,Math.min(...xs)-xpad), Math.max(...xs)+xpad],
+    yd:[Math.min(...ys)-ypad, Math.max(...ys)+ypad],
+    xfmt:v => (v*100).toFixed(0)+"%", yfmt:v => (v*100).toFixed(0)+"%",
+    xlab:key === "vol" ? "Annualised volatility" : "Max drawdown (depth)",
+    ylab:"CAGR", aria:"Risk against return for each portfolio"});
+
+  pts.forEach(d => {
+    const x = F.sx(d.x), y = F.sy(d.y);
+    el("circle", {cx:x, cy:y, r:6.5, fill:col(d.p.slot), stroke:"var(--surface)",
+      "stroke-width":2}, F.g);
+    const right = x < F.m.l + F.iw*0.72;
+    const t = el("text", {x:right ? x+11 : x-11, y:y+3.8, class:"ct-lbl",
+      "text-anchor":right ? "start" : "end", fill:"var(--ink2)"}, F.g);
+    t.textContent = d.p.short;
+    const hit = el("circle", {cx:x, cy:y, r:15, fill:"transparent", style:"cursor:pointer"}, F.g);
+    hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(d.p.label, [
+      {name:"CAGR", value:pct(d.r.cagr), color:col(d.p.slot)},
+      {name:"Volatility", value:pct(d.r.vol)},
+      {name:"Sharpe", value:num(d.r.sharpe)},
+      {name:"Max drawdown", value:pct(d.r.maxdd,1)},
+      {name:"Notional", value:mult(d.p.notional,2)},
+    ])));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+  segment($("#scatterx"), [{id:"vol",label:"Volatility"},{id:"dd",label:"Drawdown"}],
+    key, id => { S.scatterX = id; renderScatter(); });
+}
+
+/* ============================================================ LEVERAGE == */
+const LEVMETRICS = {
+  cagr_median: {label:"Median CAGR",  f:v => pct(v), ylab:"Median 25y CAGR"},
+  cagr_p5:     {label:"5th pct CAGR", f:v => pct(v), ylab:"5th percentile 25y CAGR"},
+  mdd_median:  {label:"Median max DD",f:v => pct(v,1), ylab:"Median max drawdown"},
+  p_dd_50:     {label:"P(DD ≤ −50%)", f:v => pct(v,1), ylab:"P(max drawdown ≤ −50%)"},
+};
+function renderLeverage(){
+  const host = $("#levchart");
+  const M = LEVMETRICS[S.levMetric];
+  const rows = D.kd.lev_sweep.filter(r => r.series === S.levSeries);
+  const Xs = [0, 20, 50, 100, 200];
+  const RAMP = ["#2a78d6","#4b7d9d","#6d96b3","#86b6ef","#cde2fb"];
+  const fs = [...new Set(rows.map(r => r.f))].sort((a,b) => a-b);
+
+  const series = Xs.map((X,i) => ({
+    id:"X"+X, name:X === 0 ? "untouched" : `−${X} best days`, color:RAMP[i],
+    values:fs.map(f => { const r = rows.find(q => q.X === X && Math.abs(q.f-f) < 1e-9);
+                         return r ? r[S.levMetric] : null; })
+  }));
+  const vals = series.flatMap(s => s.values).filter(v => v != null);
+  const lo = Math.min(...vals, 0), hi = Math.max(...vals, 0);
+
+  // Realised Efficient Core portfolios, plotted at their notional exposure.
+  // Only two windows have a bridge; when another is selected the markers still
+  // come from a real window, so the footnote must name THAT window, not the
+  // one in the selector.
+  const bwin = D.bridge[S.win] ? S.win : "recon";
+  const bridge = D.bridge[bwin];
+  const bsub = D.windows.find(w => w.id === bwin).sub;
+  const showMarks = S.levMetric === "cagr_median" || S.levMetric === "mdd_median";
+  const markKey = S.levMetric === "cagr_median" ? "cagr" : "maxdd";
+  const marks = showMarks ? bridge.filter(b => b[markKey] != null) : [];
+  const mv = marks.map(m => m[markKey]);
+
+  const F = frame(host, {w:760, h:380, m:{t:16,r:22,b:46,l:64},
+    xd:[0, 4], yd:[Math.min(lo, ...mv, 0), Math.max(hi, ...mv)],
+    xticks:[0,0.5,1,1.5,2,2.5,3,3.5,4], xfmt:v => v.toFixed(1)+"×",
+    yfmt:v => (v*100).toFixed(0)+"%", zero:true, xgrid:false,
+    xlab:"Leverage f  (multiple of the unlevered portfolio)", ylab:M.ylab,
+    aria:"Simulated leverage sweep with realised portfolios overlaid"});
+
+  series.forEach(s => {
+    const pts = s.values.map((v,i) => v == null ? null : [F.sx(fs[i]), F.sy(v)]).filter(Boolean);
+    path(F.g, pts, s.color, s.id === "X0" ? 2.4 : 1.8);
+  });
+
+  // Kelly reference
+  const k = D.kd.opt_lev.find(r => r.series === S.levSeries && r.X === 0);
+  if (k){
+    el("line", {x1:F.sx(k.f_kelly), x2:F.sx(k.f_kelly), y1:F.m.t, y2:F.m.t+F.ih,
+      stroke:"var(--muted)", "stroke-width":1, "stroke-dasharray":"3 3"}, F.g);
+    const t = el("text", {x:F.sx(k.f_kelly)-6, y:F.m.t+12, class:"ct-lbl",
+      "text-anchor":"end", fill:"var(--muted)"}, F.g);
+    t.textContent = `full Kelly ${mult(k.f_kelly)}`;
+  }
+
+  // realised markers: hollow diamonds, so they never read as part of a curve
+  marks.forEach(m => {
+    const x = F.sx(m.notional), y = F.sy(m[markKey]);
+    el("path", {d:`M ${x} ${y-7} L ${x+7} ${y} L ${x} ${y+7} L ${x-7} ${y} Z`,
+      fill:"var(--surface)", stroke:col(m.slot), "stroke-width":2.2}, F.g);
+    const hit = el("circle", {cx:x, cy:y, r:15, fill:"transparent", style:"cursor:pointer"}, F.g);
+    hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(m.label + " — realised", [
+      {name:"Notional exposure", value:mult(m.notional), color:col(m.slot)},
+      {name:markKey === "cagr" ? "CAGR" : "Max drawdown", value:pct(m[markKey], 1)},
+      {name:"Window", value:bsub},
+      {name:"Universe", value:"developed markets"},
+    ])));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+
+  legend(host, [
+    ...series.map(s => ({id:s.id, name:s.name, color:s.color})),
+    ...(marks.length ? [{id:"real", name:"◇ realised, developed markets", color:"var(--ink2)"}] : [])
+  ]);
+
+  $("#lev-sub").textContent =
+    `${S.levSeries === "mkt" ? "US total market" : "US small-cap value"} · 5,000 block-20 paths per point · 25-year horizon`;
+  $("#lev-ft").innerHTML = showMarks
+    ? `The <strong>lines</strong> are simulated 25-year outcomes for a US equity portfolio held at
+       leverage <span class="mono">f</span>. The <strong>diamonds</strong> are realised
+       developed-market results over <strong>${esc(bsub)}</strong>, placed at each portfolio's
+       notional exposure${bwin === S.win ? "" : " — the selected window has no bridge, so the "
+       + "reconstruction window is used"}. Same units and one shared axis — but a different
+       universe, a different window, and simulation against history. Read the vertical gap
+       between a diamond and the curve as a difference in <em>markets</em>, not as alpha.`
+    : `Realised markers are hidden for this metric: the Efficient Core study reports no
+       simulated 5th-percentile CAGR or drawdown probability on a comparable basis.`;
+
+  segment($("#levseries"), [{id:"mkt",label:"US market"},{id:"scv",label:"US small value"}],
+    S.levSeries, id => { S.levSeries = id; renderLeverage(); });
+  segment($("#levmetric"), Object.entries(LEVMETRICS).map(([id,m]) => ({id, label:m.label})),
+    S.levMetric, id => { S.levMetric = id; renderLeverage(); });
+}
+
+function renderOptLev(){
+  const rows = D.kd.opt_lev;
+  const grp = {mkt:"US total market", scv:"US small-cap value"};
+  let html = `<thead><tr><th>Best days removed</th>
+    <th title="Empirical log-optimal (full Kelly) leverage">Kelly f*</th>
+    <th title="Leverage that maximises simulated median 25-year CAGR">Max median CAGR</th>
+    <th title="Largest leverage with P(max drawdown ≤ −50%) ≤ 25% over 25 years">Risk budget</th>
+    <th title="Median 25-year CAGR at the risk-budget leverage">CAGR at budget</th></tr></thead><tbody>`;
+  ["mkt","scv"].forEach(s => {
+    html += `<tr class="grp"><td colspan="5">${esc(grp[s])}</td></tr>`;
+    rows.filter(r => r.series === s).forEach(r => {
+      html += `<tr${r.X===0?' class="hi"':""}><td>${r.X === 0 ? "None (full history)" : r.X + " best days"}</td>
+        <td>${mult(r.f_kelly)}</td><td>${mult(r.f_growth,1)}</td>
+        <td><strong>${mult(r.f_budget,1)}</strong></td><td>${pct(r.cagr_at_budget)}</td></tr>`;
+    });
+  });
+  $("#optlev").innerHTML = html + `</tbody>`;
+}
+
+function renderFinancing(){
+  const host = $("#finchart");
+  const rows = D.ec.fin_hist;
+  if (host.dataset.tv){
+    $("#finchart").innerHTML = `<div class="tw"><table class="dt"><thead><tr>
+      <th>Extra spread</th><th>90/60 CAGR</th><th>Sharpe</th><th>vs equities</th>
+      </tr></thead><tbody>` + rows.map(r => `<tr><td>${pct(r.spread_over_short_rate)}</td>
+      <td>${pct(r.cagr_9060)}</td><td>${num(r.sharpe)}</td>
+      <td>${sgn(r.vs_equities_pp, v => pp(v))}</td></tr>`).join("") + `</tbody></table></div>`;
+    return;
+  }
+  const xs = rows.map(r => r.spread_over_short_rate);
+  const ys = rows.map(r => r.vs_equities_pp);
+  const F = frame(host, {w:520, h:300, m:{t:16,r:24,b:46,l:58},
+    xd:[0, Math.max(...xs)], yd:[Math.min(...ys,-.1)*1.15, Math.max(...ys)*1.15],
+    xticks:xs, xfmt:v => (v*100).toFixed(2)+"%", yfmt:v => v.toFixed(1),
+    zero:true, xgrid:false, xlab:"Extra financing spread on the 0.60 notional",
+    ylab:"vs 100% equities (pp/yr)", aria:"90/60 edge as financing spread rises"});
+  path(F.g, xs.map((x,i) => [F.sx(x), F.sy(ys[i])]), col(1), 2.2);
+  xs.forEach((x,i) => {
+    const cx = F.sx(x), cy = F.sy(ys[i]);
+    el("circle", {cx, cy, r:4, fill:ys[i] >= 0 ? "var(--pos)" : "var(--neg)",
+      stroke:"var(--surface)", "stroke-width":2}, F.g);
+    const hit = el("circle", {cx, cy, r:14, fill:"transparent", style:"cursor:pointer"}, F.g);
+    hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(pct(x)+" extra spread", [
+      {name:"90/60 CAGR", value:pct(rows[i].cagr_9060), color:col(1)},
+      {name:"Sharpe", value:num(rows[i].sharpe)},
+      {name:"vs equities", value:pp(ys[i])},
+    ])));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+  $("#fin-ft").innerHTML = `Break-even extra spread is <strong>1.22%/yr</strong>. A 1pp spread
+    costs 0.60pp of return because it is levied on the full 0.60 notional, not on the 0.50 of
+    net leverage. Realistic listed-futures basis is tens of basis points — so financing is not
+    the binding constraint. <strong>The term premium is.</strong>`;
+}
+
+function renderRobust(){
+  const rows = D.ec.robustness;
+  $("#robust").innerHTML = `<thead><tr><th>Variant</th><th>CAGR</th><th>Vol</th>
+    <th>Sharpe</th><th>vs equities</th></tr></thead><tbody>`
+    + rows.map((r,i) => `<tr${i===0?' class="hi"':""}><td>${esc(r.variant)}</td>
+      <td>${pct(r.cagr)}</td><td>${pct(r.vol)}</td><td>${num(r.sharpe)}</td>
+      <td>${sgn(r.vs_equities_pp, v => pp(v))}</td></tr>`).join("") + `</tbody>`;
+}
+
+/* ============================================================ CRISIS ==== */
+function renderCrisis(){
+  const host = $("#crisis");
+  const rows = D.ec.crisis;
+  const cols = [
+    {k:"100% developed equities", id:"equity_dm"},
+    {k:"1.5x developed equities",  id:"lev15"},
+    {k:"Reconstructed 90/60",      id:"rec9060"},
+    {k:"Developed small-cap value",id:"scv_dm"},
+  ];
+  if (host.dataset.tv){
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Episode</th>
+      ${cols.map(c => `<th>${esc(BY[c.id].short)}</th>`).join("")}</tr></thead><tbody>`
+      + rows.map(r => `<tr><td>${esc(r.episode)}<div class="meta" style="font-size:11px;color:var(--muted)">${r.start} → ${r.end}</div></td>`
+        + cols.map(c => `<td>${pct(r[c.k],1)}</td>`).join("") + `</tr>`).join("")
+      + `</tbody></table></div>`;
+    return;
+  }
+  const vals = rows.flatMap(r => cols.map(c => r[c.k])).filter(v => v != null);
+  const lo = Math.min(...vals, 0), hi = Math.max(...vals, 0);
+  const W = 760, H = 360, m = {t:16, r:20, b:74, l:62};
+  const F = frame(host, {w:W, h:H, m, xd:[0, rows.length], yd:[lo*1.08, Math.max(hi*1.15, .04)],
+    xticks:[], yfmt:v => (v*100).toFixed(0)+"%", zero:true, xgrid:false,
+    ylab:"Cumulative return", aria:"Cumulative return through each crisis episode"});
+  const bw = F.iw / rows.length;
+  const gw = bw * 0.78, cw = gw / cols.length;
+  rows.forEach((r,i) => {
+    const gx = F.m.l + i*bw + (bw-gw)/2;
+    cols.forEach((c,j) => {
+      const v = r[c.k]; if (v == null) return;
+      const x = gx + j*cw, y0 = F.sy(0), y1 = F.sy(v);
+      const top = Math.min(y0,y1), h = Math.abs(y1-y0);
+      el("rect", {x:x+1, y:top, width:Math.max(1,cw-2), height:Math.max(1,h),
+        rx:3, fill:col(BY[c.id].slot)}, F.g);
+      const hit = el("rect", {x:x+1, y:F.m.t, width:Math.max(1,cw-2), height:F.ih,
+        fill:"transparent", style:"cursor:pointer"}, F.g);
+      hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(r.episode + "  " + r.start + " → " + r.end,
+        cols.map(q => ({name:BY[q.id].short, color:col(BY[q.id].slot), value:pct(r[q.k],1)})))));
+      hit.addEventListener("pointerleave", hideTip);
+    });
+    const lbl = el("text", {x:F.m.l + i*bw + bw/2, y:H-m.b+18, class:"ct-lbl",
+      "text-anchor":"middle", fill:"var(--ink2)"}, F.g);
+    const name = r.episode.replace(" selloff","").replace("Global Financial Crisis","GFC");
+    lbl.textContent = name.length > 16 ? name.slice(0,15)+"…" : name;
+    const yrs = el("text", {x:F.m.l + i*bw + bw/2, y:H-m.b+32, class:"ct-tick",
+      "text-anchor":"middle"}, F.g);
+    yrs.textContent = yr(r.start) + (yr(r.end) !== yr(r.start) ? "–"+yr(r.end).slice(2) : "");
+  });
+  legend(host, cols.map(c => ({id:c.id, name:BY[c.id].label, color:col(BY[c.id].slot)})));
+  $("#crisis-ft").innerHTML = `In five of six episodes 90/60 cut the loss materially — 12pp in
+    the dot-com bust, 9pp in the GFC. In <strong>2022</strong>, the one episode where bonds fell
+    alongside equities, it lost more than unlevered equities did (−26.7% vs −20.3%). That is the
+    structure's specific failure mode, and it is not a hypothetical tail.`;
+}
+
+function renderRegimes(){
+  $("#regimes").innerHTML = `<thead><tr><th>Regime</th><th>Months</th><th>Equities</th>
+    <th>90/60</th><th>Diff/mo</th><th>Win rate</th></tr></thead><tbody>`
+    + D.ec.regimes.map(r => `<tr><td>${esc(r.regime.replace(/\s+/," · "))}</td>
+      <td>${r.months}</td><td>${pct(r.eq_ann,1)}</td><td>${pct(r.p9060_ann,1)}</td>
+      <td>${sgn(r.diff_pp_per_month, v => pp(v))}</td><td>${pct(r.win_rate,0)}</td></tr>`).join("")
+    + `</tbody>`;
+}
+function renderLongUS(){
+  $("#longus").innerHTML = `<thead><tr><th>Period</th><th>Yrs</th><th>Equities</th>
+    <th>90/60</th><th>Diff</th><th>Term prem.</th></tr></thead><tbody>`
+    + D.ec.long_us_periods.map((r,i) => `<tr${i===0?' class="hi"':""}><td>${esc(r.period)}</td>
+      <td>${r.years}</td><td>${pct(r.equities)}</td><td>${pct(r.p9060)}</td>
+      <td>${sgn(r.diff_pp, v => pp(v))}</td>
+      <td>${sgn(r.term_premium, v => pct(v))}</td></tr>`).join("") + `</tbody>`;
+}
+
+/* ============================================================ REMOVAL === */
+const RMMETRICS = {
+  kelly_emp: {label:"Kelly f*", f:v => mult(v), ylab:"Empirical log-optimal f*"},
+  cagr:      {label:"CAGR",     f:v => pct(v), ylab:"CAGR"},
+  ann_vol:   {label:"Volatility", f:v => pct(v), ylab:"Annualised volatility"},
+  sharpe:    {label:"Sharpe",   f:v => num(v,3), ylab:"Sharpe"},
+};
+function renderRemoval(){
+  const host = $("#removal");
+  const M = RMMETRICS[S.rmMetric];
+  const modes = [{m:"best", n:"remove best days", slot:8},
+                 {m:"worst", n:"remove worst days", slot:1},
+                 {m:"both", n:"remove both", slot:7}];
+  const rows = D.kd.removal;
+  const Xs = [...new Set(rows.map(r => r.X))].sort((a,b) => a-b);
+
+  if (host.dataset.tv){
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Days removed</th>
+      ${["mkt","scv"].flatMap(s => modes.map(md => `<th>${s === "mkt" ? "Mkt" : "SCV"} ${md.m}</th>`)).join("")}
+      </tr></thead><tbody>` + Xs.map(X => `<tr><td>${X === 0 ? "none" : X}</td>`
+      + ["mkt","scv"].flatMap(s => modes.map(md => {
+          const r = rows.find(q => q.series === s && q.mode === md.m && q.X === X);
+          return `<td>${r ? M.f(r[S.rmMetric]) : "–"}</td>`;
+        })).join("") + `</tr>`).join("") + `</tbody></table></div>`;
+    return;
+  }
+
+  const series = [];
+  ["mkt","scv"].forEach(s => modes.forEach(md => {
+    series.push({
+      id:s+"_"+md.m, series:s, mode:md.m,
+      name:(s === "mkt" ? "US market" : "US small value") + " — " + md.n,
+      color:col(md.slot), dash:s === "scv" ? "5 3" : null,
+      values:Xs.map(X => { const r = rows.find(q => q.series === s && q.mode === md.m && q.X === X);
+                           return r ? r[S.rmMetric] : null; })
+    });
+  }));
+  const vals = series.flatMap(s => s.values).filter(v => v != null);
+  // X is spaced by rank, not value -- 0..500 on a linear axis would crush the left half
+  const F = frame(host, {w:760, h:360, m:{t:16,r:24,b:48,l:62},
+    xd:[0, Xs.length-1], yd:[Math.min(...vals, 0), Math.max(...vals)],
+    xticks:Xs.map((_,i) => i), xfmt:i => Xs[i] === 0 ? "0" : String(Xs[i]),
+    yfmt:S.rmMetric === "kelly_emp" || S.rmMetric === "sharpe"
+         ? v => v.toFixed(S.rmMetric === "sharpe" ? 2 : 1)
+         : v => (v*100).toFixed(0)+"%",
+    zero:true, xgrid:false, xlab:"Number of days removed (rank-spaced)", ylab:M.ylab,
+    aria:"Effect of removing the best, worst and both tails of days"});
+  series.forEach(s => {
+    const pts = s.values.map((v,i) => v == null ? null : [F.sx(i), F.sy(v)]).filter(Boolean);
+    path(F.g, pts, s.color, s.dash ? 1.7 : 2.2, s.dash);
+  });
+  crosshair(F, Xs.map((_,i) => i), series,
+    i => (Xs[i] === 0 ? "No days removed" : Xs[i] + " days removed"), M.f);
+  legend(host, series.map(s => ({id:s.id, name:s.name, color:s.color})));
+  $("#removal-ft").innerHTML = `Solid = US total market, dashed = US small-cap value.
+    Removing the <strong>worst</strong> days moves Kelly roughly 1.7× further than removing the
+    best days, in the opposite direction — and removing both still <em>raises</em> f*, because
+    variance falls faster than the mean. The 95% confidence interval on the market's f* from
+    ordinary sampling error alone is <strong>1.36× to 3.98×</strong>, which is wider than the
+    entire best-day effect up to X ≈ 100.`;
+  segment($("#rmmetric"), Object.entries(RMMETRICS).map(([id,m]) => ({id, label:m.label})),
+    S.rmMetric, id => { S.rmMetric = id; renderRemoval(); });
+}
+
+/* ============================================================ MONTE CARLO */
+function renderMCProb(){
+  const host = $("#mcprob");
+  const A = D.ec.mc_A, B = D.ec.mc_B;
+  if (host.dataset.tv){
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Horizon</th>
+      <th>Sample A (global)</th><th>Sample B (US 98y)</th><th>A median adv.</th>
+      <th>B median adv.</th></tr></thead><tbody>`
+      + A.map((a,i) => `<tr><td>${a.horizon} years</td><td>${pct(a.p_outperform,1)}</td>
+        <td>${pct(B[i].p_outperform,1)}</td><td>${sgn(a.median_advantage_pp, v => pp(v))}</td>
+        <td>${sgn(B[i].median_advantage_pp, v => pp(v))}</td></tr>`).join("")
+      + `</tbody></table></div>`;
+    return;
+  }
+  const hs = A.map(r => r.horizon);
+  const series = [
+    {id:"A", name:"Sample A — global 1990–2026", color:col(1), values:A.map(r => r.p_outperform)},
+    {id:"B", name:"Sample B — US 1928–2025", color:col(2), values:B.map(r => r.p_outperform)},
+  ];
+  const F = frame(host, {w:520, h:300, m:{t:16,r:26,b:46,l:56},
+    xd:[hs[0], hs[hs.length-1]], yd:[0.4, 0.9], xticks:hs, xfmt:v => v+"y",
+    yfmt:v => (v*100).toFixed(0)+"%", ylab:"P(90/60 wins)", xlab:"Horizon",
+    aria:"Probability 90/60 beats All World, by horizon, in both samples"});
+  el("line", {x1:F.m.l, x2:F.W-F.m.r, y1:F.sy(0.5), y2:F.sy(0.5),
+    stroke:"var(--muted)", "stroke-width":1, "stroke-dasharray":"3 3"}, F.g);
+  const cn = el("text", {x:F.W-F.m.r-3, y:F.sy(0.5)-5, class:"ct-tick", "text-anchor":"end"}, F.g);
+  cn.textContent = "coin flip";
+  series.forEach(s => {
+    path(F.g, s.values.map((v,i) => [F.sx(hs[i]), F.sy(v)]), s.color, 2.2);
+    s.values.forEach((v,i) => el("circle", {cx:F.sx(hs[i]), cy:F.sy(v), r:4, fill:s.color,
+      stroke:"var(--surface)", "stroke-width":2}, F.g));
+  });
+  crosshair(F, hs, series, h => h + "-year horizon", v => pct(v,1));
+  legend(host, series.map(s => ({id:s.id, name:s.name, color:s.color})));
+  $("#mcprob-ft").innerHTML = `<strong>The two samples give completely different answers, and
+    that disagreement is the result.</strong> Sample A's window is very nearly the greatest bond
+    bull market in history; Sample B contains a real stagflation. Reporting only Sample A would
+    be the single most misleading thing the study could do.`;
+}
+
+function renderMCKelly(){
+  const host = $("#mckelly");
+  const rows = D.kd.mc79.filter(r => r.series === S.mckSeries && r.X === 0
+    && r.scheme === "block20" && r.regime === "full" && r.frac != null);
+  const fr = rows.map(r => r.frac);
+  const series = [
+    {id:"med", name:"Median CAGR", color:col(1), values:rows.map(r => r.cagr_median)},
+    {id:"p5",  name:"5th percentile CAGR", color:col(5), values:rows.map(r => r.cagr_p5)},
+    {id:"dd90",name:"P(drawdown < −90%)", color:col(8), values:rows.map(r => r.p_dd_90)},
+  ];
+  const vals = series.flatMap(s => s.values).filter(v => v != null);
+  const F = frame(host, {w:520, h:300, m:{t:16,r:26,b:46,l:58},
+    xd:[Math.min(...fr), Math.max(...fr)], yd:[Math.min(...vals,0), Math.max(...vals)],
+    xticks:fr, xfmt:v => v.toFixed(2)+"×", yfmt:v => (v*100).toFixed(0)+"%",
+    zero:true, xgrid:false, xlab:"Multiple of full Kelly", ylab:"CAGR / probability",
+    aria:"Median CAGR, downside CAGR and ruin probability against Kelly multiple"});
+  series.forEach(s => path(F.g, s.values.map((v,i) => [F.sx(fr[i]), F.sy(v)]), s.color, 2.2));
+  crosshair(F, fr, series, f => f.toFixed(2) + "× Kelly", v => pct(v,1));
+  legend(host, series.map(s => ({id:s.id, name:s.name, color:s.color})));
+  const full = rows.find(r => Math.abs(r.frac-1) < 1e-9);
+  $("#mckelly-ft").innerHTML = full
+    ? `Full Kelly does maximise median terminal wealth — but at <strong>${pct(full.p_dd_90,1)}
+       probability of a 90% drawdown</strong> over 25 years, in the untouched sample. Half Kelly
+       gives most of the growth with a fraction of the ruin risk, which is why fractional Kelly
+       is the correct response to a mean this poorly identified.`
+    : "";
+  segment($("#mckseries"), [{id:"mkt",label:"US market"},{id:"scv",label:"US small value"}],
+    S.mckSeries, id => { S.mckSeries = id; renderMCKelly(); });
+}
+
+function renderMCSens(){
+  const host = $("#mcsens");
+  const rows = D.ec.mc_sens;
+  if (host.dataset.tv){
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Term premium</th>
+      <th>P(win) 10y</th><th>20y</th><th>30y</th><th>40y</th><th>Median adv. 30y</th>
+      </tr></thead><tbody>` + rows.map(r => `<tr${Math.abs(r.shift)<1e-9?' class="hi"':""}>
+      <td>${pct(r.term_premium)}</td><td>${pct(r.p_win_10y,1)}</td><td>${pct(r.p_win_20y,1)}</td>
+      <td>${pct(r.p_win_30y,1)}</td><td>${pct(r.p_win_40y,1)}</td>
+      <td>${sgn(r.median_adv_30y, v => pp(v))}</td></tr>`).join("") + `</tbody></table></div>`;
+    return;
+  }
+  const xs = rows.map(r => r.term_premium);
+  const hz = [["p_win_10y","10 years",1],["p_win_20y","20 years",5],
+              ["p_win_30y","30 years",7],["p_win_40y","40 years",3]];
+  const series = hz.map(([k,n,s]) => ({id:k, name:n, color:col(s), values:rows.map(r => r[k])}));
+  const F = frame(host, {w:760, h:330, m:{t:16,r:24,b:46,l:60},
+    xd:[Math.min(...xs), Math.max(...xs)], yd:[0.15, 1],
+    xticks:xs, xfmt:v => (v*100).toFixed(1)+"%", yfmt:v => (v*100).toFixed(0)+"%",
+    xgrid:false, xlab:"Bond term premium", ylab:"P(90/60 beats All World)",
+    aria:"Probability 90/60 wins as a function of the bond term premium"});
+  el("line", {x1:F.m.l, x2:F.W-F.m.r, y1:F.sy(0.5), y2:F.sy(0.5),
+    stroke:"var(--muted)", "stroke-width":1, "stroke-dasharray":"3 3"}, F.g);
+  // the analytic break-even, derived independently in the report
+  const be = 0.0128;
+  if (be >= Math.min(...xs) && be <= Math.max(...xs)){
+    el("line", {x1:F.sx(be), x2:F.sx(be), y1:F.m.t, y2:F.m.t+F.ih,
+      stroke:"var(--crit)", "stroke-width":1.5, "stroke-dasharray":"4 3"}, F.g);
+    const t = el("text", {x:F.sx(be)+6, y:F.m.t+13, class:"ct-lbl", fill:"var(--crit)"}, F.g);
+    t.textContent = "analytic break-even 1.28%";
+  }
+  series.forEach(s => path(F.g, s.values.map((v,i) => [F.sx(xs[i]), F.sy(v)]), s.color, 2.2));
+  crosshair(F, xs, series, tp => "Term premium " + pct(tp), v => pct(v,1));
+  legend(host, series.map(s => ({id:s.id, name:s.name, color:s.color})));
+  $("#mcsens-ft").innerHTML = `The simulation crosses 50% at a term premium of about
+    <strong>1.25%</strong>, matching the analytic break-even of <strong>1.28%</strong> derived
+    independently from the identity — two methods, one answer. Note the asymmetry: a longer
+    horizon amplifies whichever way the premium points. <strong>Time does not rescue a structure
+    whose edge is negative.</strong> Today's implied premium is
+    ${pct(D.ec.headline.fwd_ladder_yield - D.ec.headline.fwd_short_rate)}.`;
+}
+
+/* ============================================================ GRID/CORR = */
+function renderGrid(){
+  const rows = D.ec.return_grid;
+  const eqs = Object.keys(rows[0]).filter(k => k !== "bond");
+  const vals = rows.flatMap(r => eqs.map(k => r[k])).filter(v => v != null);
+  const mx = Math.max(...vals.map(Math.abs));
+  const cell = v => {
+    const t = Math.min(1, Math.abs(v)/mx);
+    return v >= 0
+      ? `color-mix(in oklab, var(--pos) ${(t*72).toFixed(0)}%, var(--mid))`
+      : `color-mix(in oklab, var(--neg) ${(t*72).toFixed(0)}%, var(--mid))`;
+  };
+  let html = `<div class="tw"><table class="dt" style="min-width:480px"><thead><tr>
+    <th style="text-align:left">Bond return ↓ / equity →</th>`
+    + eqs.map(k => `<th style="text-align:center">${pct(+k.replace("eq_",""),1)}</th>`).join("")
+    + `</tr></thead><tbody>`;
+  rows.forEach(r => {
+    html += `<tr><td class="mono">${pct(+r.bond.replace("bond_",""),1)}</td>`
+      + eqs.map(k => `<td style="text-align:center;background:${cell(r[k])};color:var(--ink);
+          border-bottom:2px solid var(--surface);border-right:2px solid var(--surface)"
+          title="bond ${pct(+r.bond.replace("bond_",""),1)}, equity ${pct(+k.replace("eq_",""),1)}">
+          ${pp(r[k],2)}</td>`).join("") + `</tr>`;
+  });
+  $("#grid").innerHTML = html + `</tbody></table></div>
+    <div class="legend"><span class="lg" style="cursor:default">
+      <span class="k" style="background:var(--neg);width:22px"></span>90/60 loses</span>
+    <span class="lg" style="cursor:default">
+      <span class="k" style="background:var(--pos);width:22px"></span>90/60 wins</span></div>`;
+}
+
+function renderCorr(){
+  const host = $("#corr");
+  const rows = D.ec.corr_sens;
+  const xs = rows.map(r => r.rho);
+  const eqVol = D.ec.headline.equity_vol, eqSh = D.ec.headline.equity_sharpe;
+  const F = frame(host, {w:520, h:300, m:{t:16,r:26,b:46,l:58},
+    xd:[Math.min(...xs), Math.max(...xs)],
+    yd:[Math.min(...rows.map(r => r.vol_9060), eqVol)*0.95,
+        Math.max(...rows.map(r => r.vol_9060), eqVol)*1.04],
+    xticks:xs, xfmt:v => v.toFixed(1), yfmt:v => (v*100).toFixed(0)+"%",
+    xgrid:false, xlab:"Stock/bond correlation ρ", ylab:"90/60 volatility",
+    aria:"90/60 volatility against stock-bond correlation"});
+  el("line", {x1:F.m.l, x2:F.W-F.m.r, y1:F.sy(eqVol), y2:F.sy(eqVol),
+    stroke:"var(--s2)", "stroke-width":1.5, "stroke-dasharray":"4 3"}, F.g);
+  const t = el("text", {x:F.W-F.m.r-3, y:F.sy(eqVol)-6, class:"ct-lbl",
+    "text-anchor":"end", fill:"var(--s2)"}, F.g);
+  t.textContent = "100% equities " + pct(eqVol,1);
+  const ser = [{id:"vol", name:"90/60 volatility", color:col(1),
+                values:rows.map(r => r.vol_9060)}];
+  path(F.g, xs.map((x,i) => [F.sx(x), F.sy(rows[i].vol_9060)]), col(1), 2.2);
+  rows.forEach((r,i) => {
+    const cx = F.sx(xs[i]), cy = F.sy(r.vol_9060);
+    el("circle", {cx, cy, r:4, fill:r.vol_9060 <= eqVol ? "var(--pos)" : "var(--neg)",
+      stroke:"var(--surface)", "stroke-width":2}, F.g);
+    const hit = el("circle", {cx, cy, r:14, fill:"transparent", style:"cursor:pointer"}, F.g);
+    hit.addEventListener("pointerenter", ev => showTip(ev, tipRows("ρ = " + xs[i].toFixed(1), [
+      {name:"90/60 volatility", value:pct(r.vol_9060,2), color:col(1)},
+      {name:"90/60 Sharpe", value:num(r.sharpe_9060)},
+      {name:"vs equity vol", value:ppd(r.vol_9060 - eqVol)},
+    ])));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+  // measured correlation marker
+  const rho = D.ec.headline.stock_bond_corr;
+  if (rho >= Math.min(...xs) && rho <= Math.max(...xs)){
+    el("line", {x1:F.sx(rho), x2:F.sx(rho), y1:F.m.t, y2:F.m.t+F.ih,
+      stroke:"var(--muted)", "stroke-width":1, "stroke-dasharray":"3 3"}, F.g);
+    const m = el("text", {x:F.sx(rho)+6, y:F.m.t+13, class:"ct-lbl", fill:"var(--muted)"}, F.g);
+    m.textContent = "measured " + rho.toFixed(2);
+  }
+  const last = D.ec.rolling_corr.corr_3y[D.ec.rolling_corr.corr_3y.length-1];
+  $("#corr-ft").innerHTML = `Correlation does not enter the expected-return identity at all — it
+    decides only whether the extra 0.60 of bond exposure is bought cheaply in risk terms. At
+    <strong>ρ ≥ +0.6 the 90/60 portfolio is riskier than 100% equities</strong> and the structure
+    loses its rationale. This is not hypothetical: rolling 3-year correlation was positive through
+    the 1990s, negative from 1999 to 2022, and has been <strong>positive again since 2023</strong>
+    — latest reading ${num(last)}.`;
+}
+
+/* ============================================================ DEFS ===== */
+function renderDefs(){
+  $("#defs").innerHTML = `<thead><tr><th>Portfolio</th><th>Study</th><th>Holds</th>
+    <th>Notional</th><th>Costs</th></tr></thead><tbody>`
+    + P.map(p => `<tr><td><div class="pname">
+        <span class="swatch" style="background:${col(p.slot)}"></span>
+        <span class="t"><span class="lbl">${esc(p.label)}</span>
+        <div class="meta">${esc(p.universe)}</div></span></div></td>
+      <td style="font-family:var(--sans);white-space:normal;font-size:12px;color:var(--muted)">
+        ${p.study === "ec" ? "Efficient Core" : "Kelly / best days"}</td>
+      <td style="font-family:var(--sans);white-space:normal;text-align:left;font-size:12.5px">
+        ${esc(p.exposure)}<div class="meta" style="font-size:11px;color:var(--muted);
+        font-family:var(--sans)">${esc(p.note)}</div></td>
+      <td>${mult(p.notional)}</td>
+      <td style="font-family:var(--sans);white-space:normal;text-align:left;font-size:12px">
+        ${esc(p.costs)}</td></tr>`).join("") + `</tbody>`;
+}
+
+/* ============================================================ NTSD ===== */
+const NT = D.ntsd, NR = NT.results;
+const INK = "var(--ink)";
+const DASHKEY = c => `repeating-linear-gradient(90deg, ${c} 0 4px, transparent 4px 7px)`;
+const ntRow = name => NT.summary.find(r => r.strategy === name);
+const NT_SERIES = [
+  {id:"ntsd_synth", name:"NTSD synthetic (net)", row:"NTSD synthetic (net)", color:INK, width:2.2},
+  {id:"ntsdsim_testfolio", name:"testfolio NTSDSIM", row:"testfolio NTSDSIM", color:INK, width:1.6, dash:"5 4"},
+  {id:"us_mkt", name:"US total market", row:"US market (FF)", color:col(6), width:1.8},
+];
+S.ntMuted = new Set();
+
+function cumNav(arr){
+  const out = []; let v = 1, started = false;
+  arr.forEach(x => {
+    if (x == null){ out.push(started ? v : null); return; }
+    if (!started){ started = true; out.push(1); return; }
+    v *= 1 + x; out.push(v);
+  });
+  return out;
+}
+
+function renderNtsdTiles(){
+  const net = ntRow("NTSD synthetic (net)"), pure = ntRow("NTSD pure (no costs)"),
+        tf = ntRow("testfolio NTSDSIM"), lv = NR.live.EFA, c = NR.ntsdsim_decomposition.coef;
+  const tile = (k, v, n) => `<div class="tile"><div class="k">${k}</div>
+    <div class="v">${v}</div><div class="n">${n}</div></div>`;
+  $("#ntsd-tiles").innerHTML =
+    tile("NTSD synthetic", pct(net.CAGR), `CAGR ${yr(net.start)}–${yr(net.end)}, after all costs`)
+  + tile("testfolio NTSDSIM", pct(tf.CAGR), `Same window — ${ppd(tf.CAGR - net.CAGR)}/yr against ours`)
+  + tile("Cost of running it", ppd(net.CAGR - pure.CAGR), `vs. the structure with no costs at all`)
+  + tile("Max drawdown", pct(net.MaxDD, 1), `Worst year ${pct(net.worst_year, 1)} (${net.worst_year_when})`)
+  + tile("Live since launch", pct(lv.cum_real, 1), `Real NTSD; the model made ${pct(lv.cum_synth, 1)} over the same ${lv.n_days} days`)
+  + tile("NTSDSIM decomposed", `${num(c.us)} / ${num(c.intl)}`, `US / international exposure by regression — the fund targets 0.90 / 0.60`);
+}
+
+function renderNtsdGrowth(){
+  const host = $("#ntsd-growth"), M = NT.monthly;
+  const xs = M.dates.map(toDate);
+  const ss = NT_SERIES.map(s => ({...s, values:cumNav(M[s.id]), muted:S.ntMuted.has(s.id)}));
+
+  if (host.dataset.tv){
+    const rows = ss.map(s => {
+      const last = [...s.values].reverse().find(v => v != null), r = ntRow(s.row);
+      return `<tr><td><span class="swatch" style="background:${s.dash ? DASHKEY(s.color) : s.color}"></span>${esc(s.name)}</td>
+        <td>${last == null ? "–" : last.toFixed(1) + "×"}</td><td>${pct(r && r.CAGR)}</td></tr>`;
+    }).join("");
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Series</th>
+      <th>Growth of $1</th><th>CAGR</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    return;
+  }
+  const all = ss.filter(s => !s.muted).flatMap(s => s.values.filter(v => v != null && v > 0));
+  if (!all.length){ host.innerHTML = `<p class="na" style="padding:40px 0;text-align:center">All series hidden.</p>`; return; }
+  const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...all))));
+  const hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...all))));
+  const yticks = [];
+  for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++)
+    for (const m of [1, 2, 5]){ const v = m * Math.pow(10, e); if (v >= lo && v <= hi) yticks.push(v); }
+  const x0 = Date.UTC(new Date(xs[0]).getUTCFullYear(), 0, 1);
+  const F = frame(host, {w:760, h:340, xd:[x0, xs[xs.length-1]], yd:[lo, hi], ylog:true, yticks,
+    yfmt:v => (v >= 10 ? v.toFixed(0) : v.toFixed(v < 1 ? 2 : 1)) + "×",
+    xticks:Array.from({length:12}, (_, k) => Date.UTC(1970 + 5 * k, 0, 1)).filter(t => t <= xs[xs.length-1]),
+    xfmt:fmtYear, xgrid:false,
+    ylab:"Growth of $1 (log)", aria:"Growth of one dollar: NTSD synthetic, testfolio NTSDSIM and the US market, 1970 to 2026"});
+  ss.forEach(s => {
+    if (s.muted) return;
+    const pts = s.values.map((v, i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean);
+    path(F.g, pts, s.color, s.width, s.dash);
+  });
+  crosshair(F, xs, ss, fmtMonth, v => v.toFixed(1) + "×");
+  legend(host, ss.map(s => ({id:s.id, name:s.name, color:s.dash ? DASHKEY(s.color) : s.color, on:!s.muted})),
+    id => { S.ntMuted.has(id) ? S.ntMuted.delete(id) : S.ntMuted.add(id); renderNtsdGrowth(); });
+}
+
+function renderNtsdSummary(){
+  const key = {"NTSD synthetic (net)":INK, "NTSD pure (no costs)":null,
+               "testfolio NTSDSIM":DASHKEY(INK), "US market (FF)":col(6), "VEASIM":null};
+  const r0 = NT.summary[0];
+  $("#ntsd-sum-sub").textContent = `${r0.start} → ${r0.end} · ${num(r0.years, 1)} years · daily data`;
+  $("#ntsd-sum").innerHTML = `<thead><tr><th>Series</th><th>CAGR</th><th>Vol</th><th>Sharpe</th>
+    <th>Sortino</th><th>Max DD</th><th>Worst yr</th><th>Best yr</th></tr></thead><tbody>`
+    + NT.summary.map(r => {
+        const k = key[r.strategy];
+        const sw = k ? `<span class="swatch" style="background:${k}"></span>` : `<span class="swatch"></span>`;
+        return `<tr${r.strategy === "NTSD synthetic (net)" ? ` class="hi"` : ""}><td>${sw}${esc(r.strategy)}</td>
+          <td>${pct(r.CAGR)}</td><td>${pct(r.vol)}</td><td>${num(r.Sharpe)}</td><td>${num(r.Sortino)}</td>
+          <td>${pct(r.MaxDD, 1)}</td><td>${pct(r.worst_year, 1)} <span style="color:var(--muted)">${r.worst_year_when}</span></td>
+          <td>${pct(r.best_year, 1)} <span style="color:var(--muted)">${r.best_year_when}</span></td></tr>`;
+      }).join("") + `</tbody>`;
+}
+
+function renderNtsdCosts(){
+  const a = NR.assumptions, net = ntRow("NTSD synthetic (net)"), pure = ntRow("NTSD pure (no costs)");
+  const borrowed = a.weights[2] - a.weights[1];
+  const rows = [
+    ["Expense ratio (TER)", "prospectus", pct(a.TER), "all of NAV", pct(a.TER)],
+    ["Futures financing spread over T-bills", "assumed", pct(a.SPREAD), `${num(borrowed)} borrowed`, pct(a.SPREAD * borrowed)],
+    ["Trading and roll costs", "assumed, from NTSG's KID", pct(a.TXN), "all of NAV", pct(a.TXN)],
+    ["VEA fee added back", "futures pay no ETF fee", "−" + pct(a.ER_backout.VEASIM), `${num(a.weights[2])} futures`, "−" + pct(a.ER_backout.VEASIM * a.weights[2], 3)],
+  ];
+  $("#ntsd-costs").innerHTML = `<thead><tr><th>Cost</th><th>Rate</th><th>Applies to</th>
+    <th>≈ of NAV</th></tr></thead><tbody>`
+    + rows.map(r => `<tr><td>${r[0]}<div class="meta" style="font-size:11px;color:var(--muted)">${r[1]}</div></td>
+        <td>${r[2]}</td><td style="white-space:normal">${r[3]}</td><td>${r[4]}</td></tr>`).join("")
+    + `<tr class="hi"><td><strong>Measured effect on CAGR</strong>
+        <div class="meta" style="font-size:11px;color:var(--muted)">net minus no-cost, compounded</div></td>
+        <td></td><td></td><td><strong>${ppd(net.CAGR - pure.CAGR)}</strong></td></tr></tbody>`;
+
+  $("#ntsd-spread").innerHTML = `<thead><tr><th>Financing spread</th><th>CAGR</th><th>Vol</th>
+    <th>Max DD</th></tr></thead><tbody>`
+    + NT.spread.map(r => `<tr${Math.abs(r.spread - a.SPREAD) < 1e-9 ? ` class="hi"` : ""}>
+        <td>${pct(r.spread)}${Math.abs(r.spread - a.SPREAD) < 1e-9 ? " <span class=\"flag syn\">base</span>" : ""}</td>
+        <td>${pct(r.CAGR)}</td><td>${pct(r.vol)}</td><td>${pct(r.MaxDD, 1)}</td></tr>`).join("") + `</tbody>`;
+}
+
+function renderNtsdLive(){
+  const host = $("#ntsd-live"), L = NT.live, st = NR.live;
+  const xs = L.dates.map(toDate);
+  const ss = [
+    {id:"ntsd_real", name:"NTSD (real fund)", color:INK, width:2.2},
+    {id:"synth_efa", name:"Model: SPY + EFA", color:INK, width:1.6, dash:"5 4"},
+    {id:"synth_vea", name:"Model: SPY + VEA", color:"var(--muted)", width:1.4, dash:"2 3"},
+  ].map(s => ({...s, values:cumNav(L[s.id]).map(v => v == null ? null : v - 1)}));
+  const all = ss.flatMap(s => s.values.filter(v => v != null));
+  const lo = Math.min(0, ...all), hi = Math.max(...all);
+  const pad = (hi - lo) * 0.06;
+  const monthTicks = [];
+  for (let d = new Date(xs[0]); d.getTime() <= xs[xs.length-1]; ){
+    d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+    if (d.getTime() <= xs[xs.length-1]) monthTicks.push(d.getTime());
+  }
+  const F = frame(host, {w:560, h:300, xd:[xs[0], xs[xs.length-1]], yd:[lo - pad, hi + pad], zero:true,
+    yfmt:v => (v * 100).toFixed(0) + "%", xticks:monthTicks,
+    xfmt:t => new Date(t).toLocaleString("en", {month:"short", timeZone:"UTC"}),
+    xgrid:false, ylab:"Return since launch", m:{l:54},
+    aria:"Cumulative return of the real NTSD against two synthetic versions since launch"});
+  ss.forEach(s => path(F.g, s.values.map((v, i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean),
+    s.color, s.width, s.dash));
+  crosshair(F, xs, ss, t => new Date(t).toISOString().slice(0, 10), v => pct(v, 2));
+  legend(host, ss.map(s => ({id:s.id, name:s.name, color:s.dash ? DASHKEY(s.color) : s.color})));
+
+  const e = st.EFA, v = st.VEA, b = e.beta_fit.coef, bv = v.beta_fit.coef;
+  $("#ntsd-live-sub").textContent = `${st.window[0]} → ${st.window[1]} · ${e.n_days} trading days`;
+  $("#ntsd-live-ft").innerHTML =
+    `SPY + EFA: gap ${ppd(e.mean_gap_ann)}/yr <strong>± ${pct(e.mean_gap_ann_se, 1)}</strong> (one s.e.),
+     tracking error ${pct(e.tracking_error_ann)}, correlation ${num(e.corr, 3)}, fitted exposures
+     ${num(b.us)} US / ${num(b.intl)} intl. SPY + VEA fits worse (intl ${num(bv.intl)}, TE ${pct(v.tracking_error_ann)})
+     &mdash; EAFE is the index the fund's futures actually track. Six months cannot pin down a cost to
+     better than several percent a year, so no tracking-error allowance is calibrated from it.`;
+}
+
+function renderNtsdNotes(){
+  const r = NR.daily_reset, c = NR.ntsdsim_decomposition.coef, sc = NR.source_check;
+  $("#ntsd-letf").innerHTML = `<h4>Is the testfolio LETF formula right for NTSD?</h4>
+    <p><strong>The financing term is exactly right.</strong> With L&nbsp;=&nbsp;1.5 and a swap factor
+      of 1, the formula finances 0.5 of NAV &mdash; which is what NTSD borrows implicitly: 0.60 of
+      futures less 0.10 of T-bill collateral.</p>
+    <p><strong>The daily reset is not.</strong> The formula re-levers one underlying every day;
+      NTSD holds two and lets them drift until a quarterly or 5pp rebalance. Over 1970&ndash;2026 the
+      daily-reset form returns ${pct(r.cagr_daily_reset)} against the drift model's ${pct(r.cagr_drift)},
+      and the gap swings from ${ppd(r.rolling5y_gap_min)} to ${ppd(r.rolling5y_gap_max)}/yr across
+      rolling 5-year windows. The drift model is kept; the formula's slippage diagnostics are used
+      for the live check.</p>
+    <p>Regressing NTSDSIM on its ingredients gives <strong>${num(c.us)} US, ${num(c.intl)} international,
+      ${num(c.rf)} cash</strong> (R² ${num(NR.ntsdsim_decomposition.r2, 3)}) &mdash; consistent with a
+      0.90 / 0.60 / &minus;0.50 structure built on SPY and VEASIM.</p>`;
+  $("#ntsd-caveats").innerHTML = `<h4>What this simulation cannot see</h4>
+    <p><strong>The international leg is the wrong index, on purpose.</strong> NTSD's futures track MSCI
+      EAFE; VEASIM follows FTSE Developed, which adds Canada, Korea and small caps. It is used because it
+      is the only daily series reaching 1970. Ken French's Developed ex US starts in 1990 and closes at
+      local-market times &mdash; its daily correlation with VEASIM is only ${num(sc.corr_daily)}
+      (monthly ${num(sc.corr_monthly, 3)}), while EAFE futures trade in US hours.</p>
+    <p><strong>The financing spread is assumed</strong>, not observed; each 0.30pp on it costs roughly
+      0.15pp of CAGR. The US leg is the Fama-French total market, not the S&amp;P 500, and the history
+      ends 2026-04-30 where that file ends.</p>`;
+}
+
+function renderNtsd(){
+  renderNtsdTiles(); renderNtsdGrowth(); renderNtsdSummary();
+  renderNtsdCosts(); renderNtsdLive(); renderNtsdNotes();
+}
+
+/* ============================================================ KELLY FRAC */
+// Phase 14. Fraction and X are both ORDINAL, so each gets a single-hue ramp
+// (accent for fractions, crit for removals) mixed toward the page colour.
+const K = D.kd.p14;
+const KF = [["full","Full Kelly"],["half","Half Kelly"],["quarter","Quarter Kelly"]];
+const KX = [0, 10, 25, 100];
+const KFCOL = {full:"var(--accent)",
+  half:"color-mix(in oklab, var(--accent) 70%, var(--paper))",
+  quarter:"color-mix(in oklab, var(--accent) 50%, var(--paper))",
+  unlev:"var(--muted)"};
+const KXCOL = {0:"var(--ink2)",
+  10:"color-mix(in oklab, var(--crit) 45%, var(--paper))",
+  25:"color-mix(in oklab, var(--crit) 72%, var(--paper))",
+  100:"var(--crit)"};
+const KXSHAPE = {0:"circle", 10:"square", 25:"triangle", 100:"diamond"};
+const KFNAME = {full:"Full Kelly", half:"Half Kelly", quarter:"Quarter Kelly", unlev:"Unlevered 1.00×"};
+Object.assign(S, {kfSeries:"mkt", kfView:"fractions", kfScatY:"cagr",
+                  kfSimKind:"all", kfSimVar:"primary", kfSens:"walkforward"});
+
+const kfRow = (f, X, s = S.kfSeries) => K.scenarios.find(r => r.series === s && r.frac === f && r.X === X);
+const kfSer = s => s === "mkt" ? "US total market" : "US small-cap value";
+const kfScn = (f, X) => KFNAME[f] + (X === 0 ? ", original" : `, −${X} best days`);
+const money = v => v == null ? "–" : v >= 1 ? "$" + Math.round(v).toLocaleString("en") : "$" + (+v.toPrecision(2));
+const yrs = d => d == null ? "–" : (d / 365.25).toFixed(1) + "y";
+const ppAbs = x => (Math.abs(x) * 100).toFixed(1) + "pp";
+const kfEq = (frac, metric) => K.equiv_x.find(e => e.series === S.kfSeries && e.frac === frac && e.metric === metric);
+const KF_RISK = [["ann_vol","volatility"],["max_dd","drawdown depth"],["worst_month","worst month"],["mdd_duration_days","drawdown length"]];
+
+function kfShape(g, shape, x, y, r, fill){
+  const a = {fill, stroke:"var(--surface)", "stroke-width":1.5};
+  if (shape === "circle") return el("circle", {cx:x, cy:y, r, ...a}, g);
+  if (shape === "square") return el("rect", {x:x-r*.85, y:y-r*.85, width:r*1.7, height:r*1.7, ...a}, g);
+  if (shape === "triangle") return el("path", {d:`M${x} ${y-r*1.15} L${x+r} ${y+r*.75} L${x-r} ${y+r*.75} Z`, ...a}, g);
+  return el("path", {d:`M${x} ${y-r*1.15} L${x+r*1.15} ${y} L${x} ${y+r*1.15} L${x-r*1.15} ${y} Z`, ...a}, g);
+}
+function shapeIcon(shape){
+  const p = {circle:'<circle cx="6" cy="6" r="5"/>', square:'<rect x="1.5" y="1.5" width="9" height="9"/>',
+    triangle:'<path d="M6 1 L11 10 L1 10 Z"/>', diamond:'<path d="M6 .5 L11.5 6 L6 11.5 L.5 6 Z"/>'}[shape];
+  return `<svg class="shape" viewBox="0 0 12 12" fill="var(--muted)" aria-hidden="true">${p}</svg>`;
+}
+function kfViewSeries(){
+  if (S.kfView === "fractions")
+    return KF.map(([f,n]) => ({key:`${f}_x0`, name:n, color:KFCOL[f], width:2}));
+  const f = S.kfView, other = f === "full" ? "quarter" : "full";
+  return [...KX.map(X => ({key:`${f}_x${X}`, name:kfScn(f, X), color:KXCOL[X], width:X === 0 ? 2.2 : 1.8})),
+          {key:`${other}_x0`, name:kfScn(other, 0), color:KFCOL[other], width:1.6, dash:"5 4"}];
+}
+const kfKey = s => s.dash ? DASHKEY(s.color) : s.color;
+
+function renderKFText(){
+  const F = kfRow("full",0), H = kfRow("half",0), Q = kfRow("quarter",0);
+  const F100 = kfRow("full",100), Q100 = kfRow("quarter",100);
+  const xc = kfEq("quarter","cagr").equivalent_X;
+  const never = KF_RISK.filter(([m]) => kfEq("quarter", m).equivalent_X == null).map(([,n]) => n);
+  const riskLine = never.length === KF_RISK.length
+    ? `no number of removed days up to 500 gives Full Kelly Quarter Kelly's ${never.slice(0,-1).join(", ")} or ${never[never.length-1]}`
+    : `Full Kelly never reaches Quarter Kelly's ${never.join(", ") || "—"} at any X up to 500`;
+  const sh = f => K.growth_share.find(r => r.series === S.kfSeries && r.frac === f && r.X === 100).share_of_log_growth;
+
+  $("#kf-answer").innerHTML = `<h4>The answer: no, Quarter Kelly is not a stand-in for losing the best days</h4>
+    <p>On the <strong>${kfSer(S.kfSeries)}</strong>, the two agree only on <strong>return</strong>:
+      Quarter Kelly's ${pct(Q.cagr)} CAGR equals Full Kelly with about <strong>${xc == null ? "–" : Math.round(xc)}
+      best days</strong> removed. On <strong>risk</strong> they never agree: ${riskLine}.</p>
+    <p>What the data does support: Quarter Kelly is <strong>robust to</strong> losing the best days.
+      Without the best 100 it still compounds at ${pct(Q100.cagr)} a year, where Full Kelly makes
+      ${pct(F100.cagr)}. The best 100 days supplied ${pct(sh("quarter"),0)} of its growth, against
+      ${pct(sh("full"),0)} at Full Kelly. The price is ${ppAbs(F.cagr - Q.cagr)}/yr of CAGR in the
+      untouched history.</p>`;
+
+  $("#kf-differ").innerHTML = `<h4>Why they can't be the same thing</h4>
+    <p><strong>Fractional Kelly scales exposure.</strong> Quarter Kelly cuts volatility by
+      ${pct(-(Q.ann_vol/F.ann_vol - 1),0)}, the worst month from ${pct(F.worst_month,0)} to
+      ${pct(Q.worst_month,0)}, and the longest drawdown from ${yrs(F.mdd_duration_days)} to
+      ${yrs(Q.mdd_duration_days)}. Sharpe does not move at all (${num(F.sharpe,3)} at every fraction),
+      because levered excess return is just f&middot;x.</p>
+    <p><strong>Removing best days changes the distribution.</strong> Volatility barely moves
+      (${pct(F100.ann_vol/F.ann_vol - 1,0)} at &minus;100) while drawdowns get far longer
+      (${yrs(F.mdd_duration_days)} &rarr; ${yrs(F100.mdd_duration_days)}) and Sharpe falls to
+      ${num(F100.sharpe,3)}. <strong>One removes risk; the other removes edge.</strong></p>`;
+
+  const lev = f => mult(kfRow(f,0).leverage);
+  $("#kf-limits").innerHTML = `<h4>What this can and cannot show</h4>
+    <p>This is one historical path per series. f* is estimated in-sample; the walk-forward check
+      changes the levels but not the conclusion. The best-day ranking uses the whole sample by
+      construction, and those days cluster inside crashes: about half the 100 best are 1929&ndash;33
+      rebounds. Both series are research portfolios, gross of costs.</p>
+    <p>Quarter Kelly is below 1&times; here (${lev("quarter")}), so part of the comparison is equities
+      vs equities-plus-cash. Full Kelly's max drawdown sits near &minus;100% in every scenario, so max
+      drawdown alone cannot separate them; duration, worst month and volatility carry that comparison.
+      The evidence supports Quarter Kelly as a <strong>robustness-oriented</strong> leverage level. It
+      does not show that Quarter Kelly is optimal.</p>`;
+
+  const tile = (k, v, n) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`;
+  $("#kf-tiles").innerHTML =
+    tile("Full Kelly f*", mult(F.leverage), `Estimated once on the full history. Half ${lev("half")}, Quarter ${lev("quarter")}`)
+  + tile("Quarter Kelly CAGR", pct(Q.cagr), `Full Kelly ${pct(F.cagr)}, Half ${pct(H.cagr)}`)
+  + tile("Same CAGR as Full Kelly minus", xc == null ? "–" : `${Math.round(xc)}<span style="font-size:16px;color:var(--muted)"> days</span>`,
+         "best days. Return level is the only thing the two share")
+  + tile("Risk metrics that ever match", `${KF_RISK.length - never.length}<span style="font-size:16px;color:var(--muted)">/${KF_RISK.length}</span>`,
+         "Vol, max DD, worst month, DD length. Full Kelly −X for any X ≤ 500")
+  + tile("Best 100 days’ share of growth", `${pct(sh("full"),0)} → ${pct(sh("quarter"),0)}`, "Full Kelly → Quarter Kelly")
+  + tile("CAGR without the best 100 days", pct(Q100.cagr), `Quarter Kelly. Full Kelly: ${pct(F100.cagr)}`);
+}
+
+function renderKFEquity(){
+  const host = $("#kf-equity"), P = K.paths[S.kfSeries], sm = K.summary.series[S.kfSeries];
+  const xs = P.dates.map(toDate);
+  const ss = kfViewSeries().map(s => ({...s, values:P["nav_" + s.key]}));
+  $("#kf-eq-sub").textContent = `${kfSer(S.kfSeries)} · ${sm.start} → ${sm.end} · f* = ${mult(sm.f_star)}`;
+  segment($("#kfview"), [{id:"fractions", label:"By fraction"}, {id:"full", label:"Full Kelly −X"},
+    {id:"quarter", label:"Quarter Kelly −X"}], S.kfView,
+    id => { S.kfView = id; renderKFEquity(); renderKFDD(); });
+
+  if (host.dataset.tv){
+    host.innerHTML = `<div class="tw"><table class="dt"><thead><tr><th>Scenario</th><th>Leverage</th>
+      <th>CAGR</th><th>Final $ (from $1)</th></tr></thead><tbody>` + ss.map(s => {
+        const [f, x] = s.key.split("_x"), r = kfRow(f, +x);
+        return `<tr><td><span class="swatch" style="background:${kfKey(s)}"></span>${esc(s.name)}</td>
+          <td>${mult(r.leverage)}</td><td>${pct(r.cagr)}</td><td>${money(r.final_wealth)}</td></tr>`;
+      }).join("") + `</tbody></table></div>`;
+    return;
+  }
+  const all = ss.flatMap(s => s.values.filter(v => v != null && v > 0));
+  const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...all))));
+  const hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...all))));
+  const step = Math.log10(hi / lo) > 8 ? 2 : 1, yticks = [];
+  for (let e = Math.round(Math.log10(lo)); e <= Math.round(Math.log10(hi)); e += step) yticks.push(Math.pow(10, e));
+  const F = frame(host, {w:760, h:360, m:{l:84}, xd:[xs[0], xs[xs.length-1]], yd:[lo, hi], ylog:true, yticks,
+    yfmt:money, xticks:Array.from({length:10}, (_, k) => Date.UTC(1930 + 10*k, 0, 1)), xfmt:fmtYear, xgrid:false,
+    ylab:"Growth of $1 (log)", aria:"Growth of one dollar for each Kelly scenario"});
+  ss.forEach(s => path(F.g, s.values.map((v, i) => v == null || v <= 0 ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean),
+    s.color, s.width, s.dash));
+  crosshair(F, xs, ss, fmtMonth, money);
+  legend(host, ss.map(s => ({id:s.key, name:s.name, color:kfKey(s)})));
+}
+
+function renderKFDD(){
+  const host = $("#kf-dd"), P = K.paths[S.kfSeries], xs = P.dates.map(toDate);
+  const ss = kfViewSeries().map(s => ({...s, values:P["dd_" + s.key]}));
+  const F = frame(host, {w:560, h:300, m:{l:56}, xd:[xs[0], xs[xs.length-1]], yd:[-1, 0],
+    yticks:[-1, -.8, -.6, -.4, -.2, 0], yfmt:v => (v*100).toFixed(0) + "%",
+    xticks:[1930, 1950, 1970, 1990, 2010].map(y => Date.UTC(y, 0, 1)), xfmt:fmtYear, xgrid:false,
+    ylab:"Drawdown", aria:"Drawdown from previous peak for each Kelly scenario"});
+  // deepest (most levered / most removed) first, so the shallower lines stay visible on top
+  const drawOrder = S.kfView === "fractions" ? ss : [ss[3], ss[2], ss[1], ss[0], ss[4]];
+  drawOrder.forEach(s => path(F.g, s.values.map((v, i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean),
+    s.color, Math.min(s.width, 1.6), s.dash));
+  crosshair(F, xs, ss, fmtMonth, v => pct(v, 1));
+  legend(host, ss.map(s => ({id:s.key, name:s.name, color:kfKey(s)})));
+}
+
+function renderKFDist(){
+  const host = $("#kf-dist"), H = K.distribution.filter(r => r.series === S.kfSeries);
+  const ss = [["full_x0", "Full Kelly", KFCOL.full], ["half_x0", "Half Kelly", KFCOL.half],
+              ["quarter_x0", "Quarter Kelly", KFCOL.quarter], ["full_x100", "Full Kelly, −100 best days", KXCOL[100], "5 3"]];
+  const F = frame(host, {w:560, h:300, m:{l:62}, xd:[-.2, .2], yd:[1e-5, 1], ylog:true,
+    yticks:[1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1], yfmt:v => +(v*100).toPrecision(1) + "%",
+    xticks:[-.2, -.1, 0, .1, .2], xfmt:v => (v*100).toFixed(0) + "%", xgrid:false,
+    xlab:"Daily portfolio return", ylab:"Share of days", aria:"Daily return distributions by scenario"});
+  ss.forEach(([id, , c, dash]) => {
+    const pts = [];
+    H.filter(r => r.scenario === id).forEach(r => {
+      const y = F.sy(Math.max(r.share, 1e-5));
+      pts.push([F.sx(r.bin_lo), y], [F.sx(r.bin_hi), y]);
+    });
+    path(F.g, pts, c, 1.5, dash);
+  });
+  legend(host, ss.map(([id, n, c, dash]) => ({id, name:n, color:dash ? DASHKEY(c) : c})));
+}
+
+function renderKFScatter(){
+  const host = $("#kf-scatter"), yk = S.kfScatY;
+  // unlevered 1.00x rows are kept as a reference point: Quarter Kelly sits below 1x here
+  const rows = K.scenarios.filter(r => r.series === S.kfSeries);
+  const grid = K.full_grid.filter(r => r.series === S.kfSeries).sort((a, b) => a.X - b.X);
+  const xs = rows.map(r => r.max_dd), ys = [...rows, ...grid].map(r => r[yk]);
+  const xlo = Math.min(...xs), xhi = Math.max(...xs), xp = (xhi - xlo) * .08;
+  const ylo = Math.min(...ys, 0), yhi = Math.max(...ys), yp = (yhi - ylo) * .08;
+  const F = frame(host, {w:560, h:330, m:{l:58}, xd:[xlo - xp, Math.min(0, xhi + xp)],
+    yd:[ylo < 0 ? ylo - yp : 0, yhi + yp], zero:true,
+    xfmt:v => (v*100).toFixed(0) + "%", yfmt:yk === "cagr" ? v => (v*100).toFixed(0) + "%" : v => v.toFixed(2),
+    xlab:"Maximum drawdown", ylab:yk === "cagr" ? "CAGR" : "Sharpe ratio",
+    aria:"Return against maximum drawdown for every Kelly scenario"});
+  path(F.g, grid.map(r => [F.sx(r.max_dd), F.sy(r[yk])]), KXCOL[100], 1, "2 3");
+  rows.forEach(r => {
+    const x = F.sx(r.max_dd), y = F.sy(r[yk]);
+    kfShape(F.g, KXSHAPE[r.X], x, y, 6, KFCOL[r.frac]);
+    const hit = el("circle", {cx:x, cy:y, r:12, fill:"transparent", style:"cursor:pointer"}, F.g);
+    hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(kfScn(r.frac, r.X), [
+      {name:"Leverage", value:mult(r.leverage), color:KFCOL[r.frac]},
+      {name:"CAGR", value:pct(r.cagr)}, {name:"Sharpe", value:num(r.sharpe, 3)},
+      {name:"Max drawdown", value:pct(r.max_dd, 1)}, {name:"Volatility", value:pct(r.ann_vol, 1)}])));
+    hit.addEventListener("pointerleave", hideTip);
+  });
+  const box = document.createElement("div");
+  box.className = "legend";
+  box.innerHTML = [...KF, ["unlev", KFNAME.unlev + " (reference)"]].map(([f, n]) => `<span class="lg" style="cursor:default"><span class="k"
+      style="background:${KFCOL[f]};width:10px;height:10px;border-radius:5px"></span>${n}</span>`).join("")
+    + KX.map(X => `<span class="lg" style="cursor:default">${shapeIcon(KXSHAPE[X])}${X === 0 ? "original" : `−${X} best days`}</span>`).join("")
+    + `<span class="lg" style="cursor:default"><span class="k" style="background:${KXCOL[100]};height:2px"></span>Full Kelly, X = 0…100</span>`;
+  host.appendChild(box);
+  $("#kf-scatter-ft").innerHTML = yk === "cagr"
+    ? `Removing best days moves Full Kelly straight <em>down</em>: less return, no less drawdown.
+       Lowering the fraction moves points <em>right</em>: shallower drawdown, less return. The two paths
+       share a CAGR level but never a position.`
+    : `Points with the same shape share one Sharpe ratio: the Kelly fraction cannot change Sharpe, only
+       removing days can. Full Kelly's drawdown is saturated near −100%, so this axis cannot separate
+       the Full Kelly scenarios.`;
+  segment($("#kfscaty"), [{id:"cagr", label:"CAGR"}, {id:"sharpe", label:"Sharpe"}], yk,
+    id => { S.kfScatY = id; renderKFScatter(); });
+}
+
+function renderKFShare(){
+  const host = $("#kf-share"), G = K.growth_share.filter(r => r.series === S.kfSeries);
+  const fams = ["full", "half", "quarter", "unlev"], Xs = [10, 25, 100];
+  const vmax = Math.max(1.1, ...G.map(r => r.share_of_log_growth)) * 1.06;
+  const F = frame(host, {w:560, h:300, m:{l:58, b:40}, xd:[0, 3], yd:[0, vmax], xticks:[],
+    yfmt:v => (v*100).toFixed(0) + "%", xgrid:false, ylab:"Share of log growth",
+    aria:"Share of total wealth creation from the best days, by Kelly fraction"});
+  el("line", {x1:F.m.l, x2:F.W - F.m.r, y1:F.sy(1), y2:F.sy(1), stroke:"var(--muted)",
+    "stroke-width":1, "stroke-dasharray":"3 3"}, F.g);
+  const t = el("text", {x:F.W - F.m.r - 3, y:F.sy(1) - 5, class:"ct-tick", "text-anchor":"end"}, F.g);
+  t.textContent = "all of the growth";
+  const bw = F.iw / 3, gw = bw * .8, cw = gw / fams.length;
+  Xs.forEach((X, i) => {
+    fams.forEach((f, j) => {
+      const r = G.find(q => q.X === X && q.frac === f), v = r.share_of_log_growth;
+      const x = F.m.l + i*bw + (bw - gw)/2 + j*cw, y = F.sy(v);
+      el("rect", {x:x + 1, y, width:cw - 2, height:F.sy(0) - y, rx:2, fill:KFCOL[f]}, F.g);
+      const hit = el("rect", {x:x + 1, y:F.m.t, width:cw - 2, height:F.ih, fill:"transparent", style:"cursor:pointer"}, F.g);
+      hit.addEventListener("pointerenter", ev => showTip(ev, tipRows(`Best ${X} days`, [
+        {name:KFNAME[f], value:pct(v, 1), color:KFCOL[f]},
+        {name:"Leverage", value:mult(r.leverage)},
+        {name:"Share of trading days", value:pct(r.pct_of_days, 2)}])));
+      hit.addEventListener("pointerleave", hideTip);
+    });
+    const lbl = el("text", {x:F.m.l + i*bw + bw/2, y:F.H - F.m.b + 18, class:"ct-lbl", "text-anchor":"middle",
+      fill:"var(--ink2)"}, F.g);
+    lbl.textContent = `best ${X} days`;
+  });
+  legend(host, fams.map(f => ({id:f, name:KFNAME[f], color:KFCOL[f]})));
+  const s100 = f => G.find(q => q.X === 100 && q.frac === f).share_of_log_growth;
+  const n = K.summary.series[S.kfSeries].n;
+  $("#kf-share-ft").innerHTML = `The best 100 days are ${pct(100/n, 2)} of all trading days. At Full Kelly they
+    supplied <strong>${pct(s100("full"), 0)}</strong> of all compounded growth${s100("full") > 1
+    ? ", more than all of it: without them the path loses money" : ""}. At Quarter Kelly they supplied
+    <strong>${pct(s100("quarter"), 0)}</strong>. The best days' contribution grows roughly in proportion to
+    leverage, while total growth flattens out near full Kelly, so dependence on them rises with leverage.`;
+}
+
+function renderKFSim(){
+  const kind = S.kfSimKind;
+  const R = K.similarity.filter(r => r.series === S.kfSeries && r.variant === S.kfSimVar);
+  const ids = KF.flatMap(([f]) => KX.map(X => `${f}_x${X}`));
+  const short = id => { const [f, x] = id.split("_x"); return f[0].toUpperCase() + (x === "0" ? "" : " −" + x); };
+  const get = (a, b) => R.find(r => r.from_id === a && r.to_id === b)["dist_" + kind];
+  const mx = Math.max(...R.map(r => r["dist_" + kind]));
+  const probe = id => id === "quarter_x0" || id === "half_x0";
+  const isKey = (a, b) => (probe(a) && b.startsWith("full_")) || (probe(b) && a.startsWith("full_"));
+  let html = `<table class="heat"><thead><tr><th></th>${ids.map(i => `<th>${short(i)}</th>`).join("")}</tr></thead><tbody>`;
+  ids.forEach(a => {
+    html += `<tr><th class="rh">${short(a)}</th>` + ids.map(b => {
+      const d = get(a, b), t = 1 - d / mx;
+      return `<td class="${isKey(a, b) ? "key" : ""}" title="${esc(kfScn(...a.split("_x").map((v, i) => i ? +v : v)))} vs ${esc(kfScn(...b.split("_x").map((v, i) => i ? +v : v)))}: ${d.toFixed(2)}"
+        style="background:color-mix(in oklab, var(--accent) ${(t*78).toFixed(0)}%, var(--mid));color:${t > .55 ? "#fff" : "var(--ink)"}">${d.toFixed(1)}</td>`;
+    }).join("") + `</tr>`;
+  });
+  $("#kf-sim").innerHTML = html + `</tbody></table>`;
+  const best = KX.map(X => ({X, d:get("quarter_x0", `full_x${X}`)})).sort((a, b) => a.d - b.d)[0];
+  const what = {all:"CAGR, vol, Sharpe, Sortino, max DD, Calmar, max-DD length and log wealth",
+                risk:"vol, max DD, max-DD length and worst month", return:"CAGR, Sharpe, Sortino and log wealth"}[kind];
+  $("#kf-sim-ft").innerHTML = `F/H/Q = Full/Half/Quarter Kelly, −X = best days removed. Outlined cells compare
+    Half or Quarter Kelly with Full Kelly minus X. Quarter Kelly's closest match here is
+    <strong>Full ${best.X === 0 ? "original" : "−" + best.X} at ${best.d.toFixed(2)}</strong>; for scale,
+    Full vs Full −10 is ${get("full_x0", "full_x10").toFixed(2)}. Each metric is scaled by its spread
+    across these 12 scenarios; metrics: ${what}.`;
+  segment($("#kfsimkind"), [{id:"all", label:"All"}, {id:"risk", label:"Risk"}, {id:"return", label:"Return"}],
+    kind, id => { S.kfSimKind = id; renderKFSim(); });
+  segment($("#kfsimvar"), [{id:"primary", label:"Fixed f*"}, {id:"walkforward", label:"Walk-forward"}],
+    S.kfSimVar, id => { S.kfSimVar = id; renderKFSim(); });
+}
+
+function renderKFEqx(){
+  const M = [["cagr","CAGR"],["log_final_wealth","Final wealth"],["calmar","Calmar"],["sharpe","Sharpe"],
+    ["sortino","Sortino"],["ann_vol","Volatility"],["max_dd","Max drawdown"],["worst_month","Worst month"],
+    ["mdd_duration_days","Max-DD length"]];
+  const cell = (f, m) => {
+    const e = kfEq(f, m);
+    if (e.equivalent_X == null) return `<td><span class="na">never</span></td>`;
+    return `<td>${Math.round(e.equivalent_X)}${e.equivalent_X === 0 ? ` <span style="color:var(--muted)">(no removal)</span>` : ""}</td>`;
+  };
+  $("#kf-eqx").innerHTML = `<thead><tr><th>Metric</th><th>Half Kelly</th><th>Quarter Kelly</th></tr></thead><tbody>`
+    + M.map(([m, n]) => `<tr><td>${n}</td>${cell("half", m)}${cell("quarter", m)}</tr>`).join("") + `</tbody>`;
+}
+
+function renderKFFinger(){
+  const M = [["cagr","CAGR",1],["ann_vol","Vol",-1],["sharpe","Sharpe",1],["sortino","Sortino",1],
+    ["max_dd","Max DD",-1],["worst_month","Worst month",-1],["mdd_duration_days","Max-DD length",-1],
+    ["log_final_wealth","log wealth",1]];
+  const rows = [["half",0],["quarter",0],["full",10],["full",25],["full",100]];
+  const b0 = kfRow("full", 0);
+  $("#kf-finger").innerHTML = `<thead><tr><th>Transformation</th>${M.map(([, n]) => `<th style="text-align:center">${n}</th>`).join("")}</tr></thead><tbody>`
+    + rows.map(([f, X]) => {
+        const r = kfRow(f, X);
+        return `<tr><td>${esc(kfScn(f, X))}</td>` + M.map(([m, , dir]) => {
+          const c = r[m] / b0[m] - 1, better = c * dir, t = Math.min(1, Math.abs(better)) * 72;
+          const bg = `color-mix(in oklab, var(${better >= 0 ? "--pos" : "--neg"}) ${t.toFixed(0)}%, var(--mid))`;
+          return `<td style="text-align:center;background:${bg};color:var(--ink);border-bottom:2px solid var(--surface);
+            border-right:2px solid var(--surface)">${c >= 0 ? "+" : "−"}${Math.abs(c*100).toFixed(0)}%</td>`;
+        }).join("") + `</tr>`;
+      }).join("") + `</tbody>`;
+}
+
+function renderKFTable(){
+  const sm = K.summary.series[S.kfSeries];
+  $("#kf-table-sub").textContent = `${kfSer(S.kfSeries)} · ${sm.n.toLocaleString("en")} trading days, ${num(sm.years, 1)} years · ΔCAGR vs Full Kelly original`;
+  let html = `<thead><tr><th>Scenario</th><th>CAGR</th><th>ΔCAGR</th><th>Vol</th><th>Sharpe</th>
+    <th>Sortino</th><th>Max DD</th><th>Calmar</th><th>Final $</th><th>Worst day</th><th>Worst month</th>
+    <th title="Peak to recovery; 'open' = not recovered by the end of the data">Max-DD length</th>
+    <th title="Drawdown episodes deeper than −50%">DDs ≤ −50%</th></tr></thead><tbody>`;
+  KF.forEach(([f, n]) => {
+    html += `<tr class="grp"><td colspan="13">${n} &middot; ${mult(kfRow(f, 0).leverage)} leverage</td></tr>`;
+    KX.forEach(X => {
+      const r = kfRow(f, X);
+      html += `<tr${f === "quarter" && X === 0 ? ' class="hi"' : ""}><td>${X === 0 ? "Original" : `−${X} best days`}</td>
+        <td>${pct(r.cagr)}</td><td>${X === 0 && f === "full" ? "–" : sgn(r.d_cagr, v => ppd(v))}</td>
+        <td>${pct(r.ann_vol, 1)}</td><td>${num(r.sharpe, 3)}</td><td>${num(r.sortino, 3)}</td>
+        <td>${pct(r.max_dd, 1)}</td><td>${num(r.calmar, 3)}</td><td>${money(r.final_wealth)}</td>
+        <td>${pct(r.worst_day, 1)}</td><td>${pct(r.worst_month, 1)}</td>
+        <td>${yrs(r.mdd_duration_days)}${r.mdd_recovered ? "" : ` <span class="flag syn">open</span>`}</td>
+        <td>${r.n_dd_50}</td></tr>`;
+    });
+  });
+  $("#kf-table").innerHTML = html + `</tbody>`;
+}
+
+function renderKFWF(){
+  const host = $("#kf-wf"), P = K.paths[S.kfSeries], sm = K.summary.series[S.kfSeries];
+  const i0 = P.wf_f_x0.findIndex(v => v != null);
+  const xs = P.dates.slice(i0).map(toDate);
+  const ss = KX.map(X => ({name:X === 0 ? "original" : `−${X} best days`, color:KXCOL[X],
+                           values:P[`wf_f_x${X}`].slice(i0)}));
+  const F = frame(host, {w:560, h:300, m:{l:56}, xd:[xs[0], xs[xs.length-1]], yd:[0, 4], yticks:[0, 1, 2, 3, 4],
+    yfmt:v => v + "×", xticks:[1940, 1960, 1980, 2000, 2020].map(y => Date.UTC(y, 0, 1)), xfmt:fmtYear, xgrid:false,
+    ylab:"Full-Kelly leverage", aria:"Walk-forward Kelly leverage through time"});
+  el("line", {x1:F.m.l, x2:F.W - F.m.r, y1:F.sy(sm.f_star), y2:F.sy(sm.f_star), stroke:KFCOL.full,
+    "stroke-width":1, "stroke-dasharray":"4 3"}, F.g);
+  const t = el("text", {x:F.W - F.m.r - 3, y:F.sy(sm.f_star) - 6, class:"ct-lbl", "text-anchor":"end", fill:KFCOL.full}, F.g);
+  t.textContent = `fixed full-sample f* ${mult(sm.f_star)}`;
+  ss.forEach(s => path(F.g, s.values.map((v, i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean),
+    s.color, 1.5));
+  crosshair(F, xs, ss, fmtMonth, v => mult(v));
+  legend(host, ss.map((s, i) => ({id:i, name:s.name, color:s.color})));
+}
+
+function renderKFSens(){
+  const V = {walkforward:"Walk-forward", fixed_1936:"Fixed f*, 1936+", cash_day:"Cash day",
+    cost_futures:"Futures financing", cost_broker:"Broker loan", cost_letf:"Leveraged ETF"};
+  const COSTTXT = {cost_futures:"fed funds + 0.30%/yr on borrowed money (equity-index futures)",
+    cost_broker:"fed funds + 1.00%/yr on borrowed money (a retail margin loan)",
+    cost_letf:"fed funds + the swap spread fitted to live SSO/UPRO on borrowed money, plus a 0.91% TER on the whole position"};
+  const R = K.sensitivity.filter(r => r.series === S.kfSeries && r.variant === S.kfSens);
+  const wf = S.kfSens === "walkforward";
+  let html = `<thead><tr><th>Scenario</th><th>Leverage</th><th>CAGR</th>
+    <th>Vol</th><th>Sharpe</th><th>Max DD</th></tr></thead><tbody>`;
+  KF.forEach(([f, n]) => {
+    html += `<tr class="grp"><td colspan="6">${n}</td></tr>`;
+    KX.forEach(X => {
+      const r = R.find(q => q.frac === f && q.X === X);
+      html += `<tr${f === "quarter" && X === 0 ? ' class="hi"' : ""}><td style="min-width:0">${X === 0 ? "Original" : `−${X} best days`}</td>
+        <td>${mult(r.leverage)}${wf ? `<div class="sub2">mean; ${num(r.leverage_min, 2)}–${num(r.leverage_max, 2)}</div>` : ""}</td>
+        <td>${pct(r.cagr)}</td><td>${pct(r.ann_vol, 1)}</td><td>${num(r.sharpe, 3)}</td><td>${pct(r.max_dd, 1)}</td></tr>`;
+    });
+  });
+  $("#kf-sens").innerHTML = html + `</tbody>`;
+  $("#kf-sens-sub").textContent = `${kfSer(S.kfSeries)} · ${V[S.kfSens]}`;
+
+  const simW = K.similarity.filter(r => r.series === S.kfSeries && r.variant === "walkforward" && r.from_id === "quarter_x0" && r.to_id.startsWith("full_"));
+  const maxGap = Math.max(...R.map(r => Math.abs(r.cagr - kfRow(r.frac, r.X).cagr)));
+  $("#kf-sens-ft").innerHTML = {
+    walkforward:`Leverage is re-estimated each month from data available at the time, from
+      ${K.summary.series[S.kfSeries].wf_trade_start}. The conclusion holds: Quarter Kelly's overall distance to
+      Full Kelly −X stays between ${num(Math.min(...simW.map(r => r.dist_all)), 2)} and
+      ${num(Math.max(...simW.map(r => r.dist_all)), 2)}, and its risk-only distance never drops below
+      ${num(Math.min(...simW.map(r => r.dist_risk)), 2)}.`,
+    fixed_1936:`The main sizing, restricted to the walk-forward window so the two line up. About half of the
+      100 best days are 1929–33 rebounds before this window starts, so removing them bites much less
+      here, and the 1929–32 crash is gone from the drawdowns.`,
+    cash_day:`Removed days stay on the calendar and earn the T-bill rate instead of being dropped. CAGR differs
+      from the main run by at most ${(maxGap*100).toFixed(2)}pp, so it makes no practical difference
+      which reading is used.`,
+  }[S.kfSens] ?? `${COSTTXT[S.kfSens]}. CAGR falls by up to ${(maxGap*100).toFixed(2)}pp for Full Kelly
+      against the frictionless run${S.kfSens === "cost_letf" ? "" : "; Quarter Kelly never borrows, so it is unaffected"}.`;
+  segment($("#kfsens"), Object.entries(V).map(([id, label]) => ({id, label})), S.kfSens,
+    id => { S.kfSens = id; renderKFSens(); });
+}
+
+function renderKF(){
+  segment($("#kfseries"), [{id:"mkt", label:"US market"}, {id:"scv", label:"US small value"}], S.kfSeries,
+    id => { S.kfSeries = id; renderKF(); });
+  renderKFText(); renderKFEquity(); renderKFDD(); renderKFDist(); renderKFScatter();
+  renderKFShare(); renderKFSim(); renderKFEqx(); renderKFFinger(); renderKFTable();
+  renderKFWF(); renderKFSens();
+}
+
+/* ============================================================ THEME ==== */
+function initTheme(){
+  const btn = $("#themebtn");
+  const stored = (() => { try { return localStorage.getItem("pd-theme"); } catch { return null; } })();
+  if (stored === "dark" || stored === "light") document.documentElement.setAttribute("data-theme", stored);
+  const paint = () => {
+    const t = document.documentElement.getAttribute("data-theme");
+    $("#themeicon").textContent = t === "dark" ? "●" : t === "light" ? "○" : "◐";
+    $("#themelabel").textContent = t === "dark" ? "Dark" : t === "light" ? "Light" : "System";
+  };
+  btn.onclick = () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const next = cur === "dark" ? "light" : cur === "light" ? null : "dark";
+    if (next) document.documentElement.setAttribute("data-theme", next);
+    else document.documentElement.removeAttribute("data-theme");
+    try { next ? localStorage.setItem("pd-theme", next) : localStorage.removeItem("pd-theme"); } catch {}
+    paint();
+  };
+  paint();
+}
+
+/* ============================================================ NAV ====== */
+function pickWindow(id){
+  if (id === S.win) return;
+  S.win = id; S.muted.clear(); renderAll();
+}
+function initNav(){
+  const box = $("#navlinks"), links = [...box.querySelectorAll("a")];
+  const secs = links.map(a => document.querySelector(a.getAttribute("href")));
+  const navwin = $("#navwin"), totop = $("#totop");
+  let queued = false;
+  const spy = () => {
+    queued = false;
+    const y = scrollY + 90;
+    let cur = null;
+    secs.forEach(s => { if (s.offsetTop <= y) cur = s; });
+    links.forEach((a,i) => {
+      const on = secs[i] === cur;
+      if (on === a.hasAttribute("aria-current")) return;
+      if (on){
+        a.setAttribute("aria-current", "true");
+        // keep the active link visible when the link row scrolls horizontally
+        if (a.offsetLeft < box.scrollLeft || a.offsetLeft + a.offsetWidth > box.scrollLeft + box.clientWidth)
+          box.scrollLeft = a.offsetLeft - 12;
+      } else a.removeAttribute("aria-current");
+    });
+    // the window only drives sections 01-02, so only offer it there
+    navwin.hidden = !(cur && (cur.id === "compare" || cur.id === "leverage"));
+    totop.classList.toggle("show", scrollY > 700);
+  };
+  addEventListener("scroll", () => { if (!queued){ queued = true; requestAnimationFrame(spy); } }, {passive:true});
+  addEventListener("resize", spy);
+  totop.onclick = () => scrollTo({top:0});
+  spy();
+}
+
+/* ===================================================== RECONSTRUCTIONS == */
+const RC = D.recon;
+S.reconFund = RC && RC.funds.length ? (RC.funds.find(f => f.ticker === "NTSX") || RC.funds[0]).ticker : null;
+
+function renderStale(){
+  const w = D.meta.warnings || [];
+  const box = $("#stale");
+  if (!w.length){ box.hidden = true; return; }
+  box.hidden = false;
+  box.innerHTML = `<h4>Some outputs were produced under a different configuration</h4>
+    <p>These study outputs do not match the current settings, so numbers on this page may mix
+      two generations of results. Re-run the studies (<span class="mono">RERUN_STUDIES = True</span>
+      in <span class="mono">run.py</span>).</p><ul>${w.map(x => `<li class="mono">${esc(x)}</li>`).join("")}</ul>`;
+}
+
+function renderReconLive(){
+  const good = r => r.live_gap_pp != null && Math.abs(r.live_gap_pp) <= 0.5;
+  $("#recon-live").innerHTML = `<thead><tr><th>Fund</th><th>Structure</th><th>Live since</th>
+    <th>Real CAGR</th><th>Model CAGR</th><th>Gap</th><th>Tracking err.</th><th>Weekly corr.</th></tr></thead><tbody>`
+    + RC.summary.map(r => `<tr${good(r) ? "" : ` class="hi"`}><td><strong>${esc(r.ticker)}</strong>
+        <div class="sub2">${esc(r.name)}</div></td><td style="min-width:220px">${esc(r.structure)}</td>
+        <td>${r.live_start || "–"}<div class="sub2">${r.live_years == null ? "" : num(r.live_years, 1) + "y"}</div></td>
+        <td>${pct(r.live_cagr_real)}</td><td>${pct(r.live_cagr_model)}</td>
+        <td>${r.live_gap_pp == null ? "–" : sgn(r.live_gap_pp / 100, x => ppd(x))}</td>
+        <td>${pct(r.live_te, 1)}</td><td>${num(r.live_corr_weekly, 3)}</td></tr>`).join("") + `</tbody>`;
+  const bad = RC.summary.filter(r => !good(r)).map(r => r.ticker);
+  $("#recon-live-ft").innerHTML = `Gap = real minus model, per year. Highlighted rows miss by more than
+    0.5pp/yr, so their structure or proxy is not fully captured: ${bad.length ? esc(bad.join(", ")) : "none"}.
+    NTSE's equity sleeve is evidently not a plain cap-weighted EM index (the real fund is also more volatile
+    than the model), and RSST runs its own trend model, for which DBMF is only a stand-in. Daily tracking
+    error is mostly closing-time and dividend-timing noise; the weekly correlation is the cleaner read.`;
+}
+
+function renderReconGrowth(){
+  const host = $("#recon-growth");
+  const f = RC.funds.find(x => x.ticker === S.reconFund);
+  segment($("#reconfund"), RC.funds.map(x => ({id:x.ticker, label:x.ticker})), S.reconFund,
+    id => { S.reconFund = id; renderReconGrowth(); });
+  const h = f.history, M = f.history_monthly;
+  $("#recon-growth-sub").textContent = h ? `${f.name} · ${h.start} → ${h.end} · ${h.note}` : f.name;
+  if (!M){ host.innerHTML = `<p class="na">No history for this fund.</p>`; return; }
+  const xs = M.dates.map(toDate), vals = cumNav(M.ret);
+  const all = vals.filter(v => v != null && v > 0);
+  const lo = Math.pow(10, Math.floor(Math.log10(Math.min(...all))));
+  const hi = Math.pow(10, Math.ceil(Math.log10(Math.max(...all))));
+  const yticks = [];
+  for (let e = Math.log10(lo); e <= Math.log10(hi) + 1e-9; e++)
+    for (const m of [1, 2, 5]){ const v = m * Math.pow(10, e); if (v >= lo && v <= hi) yticks.push(v); }
+  const y0 = new Date(xs[0]).getUTCFullYear(), y1 = new Date(xs[xs.length-1]).getUTCFullYear();
+  const step = y1 - y0 > 40 ? 10 : 5;
+  const xticks = [];
+  for (let y = Math.ceil(y0 / step) * step; y <= y1; y += step) xticks.push(Date.UTC(y, 0, 1));
+  const F = frame(host, {w:760, h:300, xd:[xs[0], xs[xs.length-1]], yd:[lo, hi], ylog:true, yticks,
+    yfmt:v => (v >= 10 ? v.toFixed(0) : v.toFixed(v < 1 ? 2 : 1)) + "×", xticks, xfmt:fmtYear, xgrid:false,
+    ylab:"Growth of $1 (log)", aria:`Growth of one dollar in the ${f.ticker} structure`});
+  const ss = [{id:f.ticker, name:`${f.ticker} structure`, color:INK, width:2, values:vals}];
+  path(F.g, vals.map((v, i) => v == null ? null : [F.sx(xs[i]), F.sy(v)]).filter(Boolean), INK, 2);
+  crosshair(F, xs, ss, fmtMonth, v => v.toFixed(2) + "×");
+
+  $("#recon-hist").innerHTML = `<thead><tr><th>Fund</th><th>Window</th><th>CAGR</th><th>Vol</th>
+    <th>Sharpe</th><th>Max DD</th><th>Longest DD</th><th>Ulcer</th></tr></thead><tbody>`
+    + RC.funds.filter(x => x.history).map(x => { const t = x.history;
+        return `<tr${x.ticker === S.reconFund ? ` class="hi"` : ""}><td><strong>${esc(x.ticker)}</strong></td>
+          <td>${yr(t.start)}–${yr(t.end)}</td><td>${pct(t.cagr)}</td><td>${pct(t.vol, 1)}</td>
+          <td>${num(t.sharpe)}</td><td>${pct(t.max_dd, 1)}</td><td>${num(t.longest_dd_y, 1)}y</td>
+          <td>${num(t.ulcer, 1)}</td></tr>`; }).join("") + `</tbody>`;
+}
+
+function renderReconSide(){
+  $("#recon-fin").innerHTML = `<thead><tr><th>Preset</th><th>Spread over fed funds</th><th>TER</th><th>Reset</th></tr></thead><tbody>`
+    + RC.presets.map(p => `<tr><td><strong>${esc(p.name)}</strong><div class="sub2">${esc(p.note)}</div></td>
+        <td>${pct(p.spread)}</td><td>${pct(p.ter)}</td><td>${p.daily_reset ? "daily" : "periodic"}</td></tr>`).join("")
+    + `</tbody>`;
+  const L = RC.letf || {};
+  $("#recon-letf").innerHTML = `<thead><tr><th>Fund</th><th>Window</th><th>Live CAGR</th>
+    <th>Model at 0 spread</th><th>Fitted spread</th></tr></thead><tbody>`
+    + ["SSO", "UPRO"].filter(k => L[k]).map(k => `<tr><td><strong>${k}</strong> ${L[k].L}×</td>
+        <td>${yr(L[k].start)}–${yr(L[k].end)}</td><td>${pct(L[k].live_cagr)}</td>
+        <td>${pct(L[k].model_cagr_zero_spread)}</td><td>${pct(L[k].fitted_spread)}</td></tr>`).join("")
+    + `</tbody>`;
+  const V = RC.investable_scv || {};
+  $("#recon-scv").innerHTML = `<thead><tr><th>Fund</th><th>Window</th><th>Fund CAGR</th>
+    <th>KF SMALL HiBM</th><th>Drag</th></tr></thead><tbody>`
+    + Object.entries(V).filter(([, v]) => !v.error).map(([k, v]) => `<tr><td><strong>${esc(k)}</strong></td>
+        <td>${yr(v.start)}–${yr(v.end)}</td><td>${pct(v.cagr_fund)}</td><td>${pct(v.cagr_kf)}</td>
+        <td>${sgn(v.drag_pp_per_yr / 100, x => ppd(x))}</td></tr>`).join("") + `</tbody>`;
+}
+
+function renderRecon(){
+  if (!RC){ $("#recon").hidden = true; return; }
+  renderReconLive(); renderReconGrowth(); renderReconSide();
+}
+
+/* ============================================================ BOOT ===== */
+function renderAll(){
+  renderWindows(); renderTiles(); renderMatrix();
+  renderGrowth(); renderDD(); renderScatter();
+  renderLeverage();
+}
+function init(){
+  initTheme(); renderSources();
+  tableView("growth", $("#growth"), renderGrowth);
+  tableView("dd", $("#ddchart"), renderDD);
+  tableView("fin", $("#finchart"), renderFinancing);
+  tableView("crisis", $("#crisis"), renderCrisis);
+  tableView("removal", $("#removal"), renderRemoval);
+  tableView("mcprob", $("#mcprob"), renderMCProb);
+  tableView("mcsens", $("#mcsens"), renderMCSens);
+  tableView("ntsdgrowth", $("#ntsd-growth"), renderNtsdGrowth);
+  tableView("kfequity", $("#kf-equity"), renderKFEquity);
+  renderStale();
+  renderAll();
+  renderNtsd();
+  renderKF();
+  renderRecon();
+  renderOptLev(); renderFinancing(); renderRobust();
+  renderCrisis(); renderRegimes(); renderLongUS(); renderRemoval();
+  renderMCProb(); renderMCKelly(); renderMCSens();
+  renderGrid(); renderCorr(); renderDefs();
+  addEventListener("scroll", hideTip, {passive:true});
+  initNav();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,576 @@
+{
+  "fractions": {
+    "full": 1.0,
+    "half": 0.5,
+    "quarter": 0.25
+  },
+  "X_main": [
+    0,
+    10,
+    25,
+    100
+  ],
+  "series": {
+    "mkt": {
+      "label": "Broad market",
+      "f_star": 2.6163616454101675,
+      "apy": 262.77605380796973,
+      "years": 99.8302532511978,
+      "n": 26233,
+      "start": "1926-07-01",
+      "end": "2026-04-30",
+      "wf_trade_start": "1936-07-01"
+    },
+    "scv": {
+      "label": "Small-cap value",
+      "f_star": 2.78009325764397,
+      "apy": 262.77605380796973,
+      "years": 99.8302532511978,
+      "n": 26233,
+      "start": "1926-07-01",
+      "end": "2026-04-30",
+      "wf_trade_start": "1936-07-01"
+    }
+  },
+  "nearest": {
+    "primary": {
+      "mkt": {
+        "half": {
+          "dist_all": {
+            "0": 0.7651358632606448,
+            "10": 0.67846086141005,
+            "25": 0.9428960628035448,
+            "100": 2.712366563815263
+          },
+          "dist_risk": {
+            "0": 1.1249512007004034,
+            "10": 1.2022597071565722,
+            "25": 1.2505812709161241,
+            "100": 2.249893621288389
+          },
+          "dist_return": {
+            "0": 0.5169147593269432,
+            "10": 0.3142260932203759,
+            "25": 0.8061070886736744,
+            "100": 2.8786954395669677
+          }
+        },
+        "quarter": {
+          "dist_all": {
+            "0": 1.595651100002894,
+            "10": 1.4449542789312835,
+            "25": 1.4702371814311195,
+            "100": 2.7327242324727328
+          },
+          "dist_risk": {
+            "0": 2.1981452682925906,
+            "10": 2.265613289443772,
+            "25": 2.29524908606633,
+            "100": 3.0185485488782016
+          },
+          "dist_return": {
+            "0": 1.145512194083349,
+            "10": 0.7456368032736701,
+            "25": 0.6769715153264249,
+            "100": 2.4341260614049576
+          }
+        }
+      },
+      "scv": {
+        "half": {
+          "dist_all": {
+            "0": 0.8846228776131471,
+            "10": 0.8458676877965745,
+            "25": 1.0594340471144146,
+            "100": 2.5456099884882977
+          },
+          "dist_risk": {
+            "0": 1.175979854830038,
+            "10": 1.3450444990269919,
+            "25": 1.5279020176468348,
+            "100": 2.159957209614495
+          },
+          "dist_return": {
+            "0": 0.6381211493122073,
+            "10": 0.375809217023401,
+            "25": 0.7212406596360345,
+            "100": 2.694307311233187
+          }
+        },
+        "quarter": {
+          "dist_all": {
+            "0": 1.734383278864059,
+            "10": 1.5626402885574162,
+            "25": 1.5514716073786579,
+            "100": 2.4789206808418114
+          },
+          "dist_risk": {
+            "0": 2.1724535526829145,
+            "10": 2.2858776338346,
+            "25": 2.418953489539792,
+            "100": 2.8899212932481206
+          },
+          "dist_return": {
+            "0": 1.4035275643135403,
+            "10": 0.9755001868540317,
+            "25": 0.8087811334653463,
+            "100": 2.2100941722162517
+          }
+        }
+      }
+    },
+    "walkforward": {
+      "mkt": {
+        "half": {
+          "dist_all": {
+            "0": 1.1325933023570385,
+            "10": 1.0181679730310496,
+            "25": 1.022453130501604,
+            "100": 2.217617307069299
+          },
+          "dist_risk": {
+            "0": 1.585708864093164,
+            "10": 1.5801055456390325,
+            "25": 1.3005873513235138,
+            "100": 1.63314892605979
+          },
+          "dist_return": {
+            "0": 0.8277992066440076,
+            "10": 0.40513261162347647,
+            "25": 0.5807448722579369,
+            "100": 2.341255443524331
+          }
+        },
+        "quarter": {
+          "dist_all": {
+            "0": 1.8072758867486518,
+            "10": 1.652640639086371,
+            "25": 1.518807010977456,
+            "100": 2.236685419511378
+          },
+          "dist_risk": {
+            "0": 2.347697195788219,
+            "10": 2.330926747998096,
+            "25": 2.0190604725109282,
+            "100": 1.8187378047802931
+          },
+          "dist_return": {
+            "0": 1.5049458734583154,
+            "10": 1.0205114328741416,
+            "25": 0.7102174521110811,
+            "100": 1.9945578556199715
+          }
+        }
+      },
+      "scv": {
+        "half": {
+          "dist_all": {
+            "0": 1.2562984053623192,
+            "10": 0.7339174549769326,
+            "25": 0.9730130788065372,
+            "100": 1.9232775171939542
+          },
+          "dist_risk": {
+            "0": 1.6490576148144118,
+            "10": 1.2199895498845506,
+            "25": 1.5234323191979324,
+            "100": 1.2663207815363475
+          },
+          "dist_return": {
+            "0": 0.9131793870724595,
+            "10": 0.5343205737367225,
+            "25": 0.5449797897881958,
+            "100": 2.1802916023754992
+          }
+        },
+        "quarter": {
+          "dist_all": {
+            "0": 1.922278806505914,
+            "10": 1.4717960220988584,
+            "25": 1.491416501102034,
+            "100": 1.9288397755407685
+          },
+          "dist_risk": {
+            "0": 2.4509081604340825,
+            "10": 2.1243205065322677,
+            "25": 2.3079914642226615,
+            "100": 1.9446019675555541
+          },
+          "dist_return": {
+            "0": 1.6271838771650784,
+            "10": 1.2169192287472683,
+            "25": 0.9428516562110931,
+            "100": 1.8899243561903556
+          }
+        }
+      }
+    }
+  },
+  "checks": [
+    {
+      "series": "mkt",
+      "check": "f* equals Phase 4 kelly_emp at X=0",
+      "ok": true,
+      "got": 2.6163616454101675,
+      "want": 2.6163616454101675
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=0 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.10244467074804008,
+      "want": 0.1024446707480399
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=0 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.17470275413524233,
+      "want": 0.1747027541352423
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=0 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.46614813037710473,
+      "want": 0.4661481303771047
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=5 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.09619772988090666,
+      "want": 0.0961977298809066
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=5 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.17258617010172575,
+      "want": 0.1725861701017257
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=5 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.43694833937787786,
+      "want": 0.4369483393778777
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=10 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.09133584991370292,
+      "want": 0.0913358499137029
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=10 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.17134697039235033,
+      "want": 0.1713469703923503
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=10 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.41297929548832457,
+      "want": 0.4129792954883245
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=50 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.06352975968871448,
+      "want": 0.0635297596887145
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=50 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.166129199479056,
+      "want": 0.166129199479056
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=50 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.2653247140256499,
+      "want": 0.2653247140256499
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=100 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.03943106508314389,
+      "want": 0.0394310650831439
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=100 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.16294473518551317,
+      "want": 0.1629447351855131
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=100 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.1265443090037985,
+      "want": 0.1265443090037984
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=200 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.0016446810990633194,
+      "want": 0.0016446810990633
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=200 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.1588580767006215,
+      "want": 0.1588580767006215
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=200 sharpe equals Phase 4",
+      "ok": true,
+      "got": -0.10768558556819487,
+      "want": -0.1076855855681948
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=500 cagr equals Phase 4",
+      "ok": true,
+      "got": -0.07689701025827216,
+      "want": -0.0768970102582721
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=500 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.152467373890071,
+      "want": 0.152467373890071
+    },
+    {
+      "series": "mkt",
+      "check": "unlevered X=500 sharpe equals Phase 4",
+      "ok": true,
+      "got": -0.6549152384054833,
+      "want": -0.6549152384054833
+    },
+    {
+      "series": "mkt",
+      "check": "Sharpe invariant across fractions at X=0",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "mkt",
+      "check": "Sharpe invariant across fractions at X=10",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "mkt",
+      "check": "Sharpe invariant across fractions at X=25",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "mkt",
+      "check": "Sharpe invariant across fractions at X=100",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "scv",
+      "check": "f* equals Phase 4 kelly_emp at X=0",
+      "ok": true,
+      "got": 2.78009325764397,
+      "want": 2.78009325764397
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=0 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.1439311681031498,
+      "want": 0.1439311681031498
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=0 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.2101344195421973,
+      "want": 0.2101344195421973
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=0 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.5956293781096134,
+      "want": 0.5956293781096133
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=5 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.13378912008969518,
+      "want": 0.1337891200896952
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=5 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.20525356907256753,
+      "want": 0.2052535690725675
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=5 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.562052431459811,
+      "want": 0.5620524314598109
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=10 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.1281850515221819,
+      "want": 0.1281850515221818
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=10 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.20391393863672344,
+      "want": 0.2039139386367234
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=10 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.5401648852905356,
+      "want": 0.5401648852905355
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=50 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.09563215235366858,
+      "want": 0.0956321523536685
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=50 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.19830470952014528,
+      "want": 0.1983047095201452
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=50 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.4021851396697545,
+      "want": 0.4021851396697544
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=100 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.06498726785986303,
+      "want": 0.064987267859863
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=100 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.19416018647764213,
+      "want": 0.1941601864776421
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=100 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.2603652235603913,
+      "want": 0.2603652235603912
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=200 cagr equals Phase 4",
+      "ok": true,
+      "got": 0.01716881118060261,
+      "want": 0.0171688111806025
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=200 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.1887902788961851,
+      "want": 0.1887902788961851
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=200 sharpe equals Phase 4",
+      "ok": true,
+      "got": 0.01860427262364044,
+      "want": 0.0186042726236404
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=500 cagr equals Phase 4",
+      "ok": true,
+      "got": -0.07945961737585626,
+      "want": -0.0794596173758562
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=500 ann_vol equals Phase 4",
+      "ok": true,
+      "got": 0.1806100471491981,
+      "want": 0.1806100471491981
+    },
+    {
+      "series": "scv",
+      "check": "unlevered X=500 sharpe equals Phase 4",
+      "ok": true,
+      "got": -0.542914737291273,
+      "want": -0.5429147372912729
+    },
+    {
+      "series": "scv",
+      "check": "Sharpe invariant across fractions at X=0",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "scv",
+      "check": "Sharpe invariant across fractions at X=10",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "scv",
+      "check": "Sharpe invariant across fractions at X=25",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    },
+    {
+      "series": "scv",
+      "check": "Sharpe invariant across fractions at X=100",
+      "ok": true,
+      "got": 0.0,
+      "want": 0.0
+    }
+  ],
+  "runtime_s": 304.9
+}

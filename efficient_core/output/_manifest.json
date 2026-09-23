@@ -1,0 +1,34 @@
+{
+  "ec_analysis.py": {
+    "coupons": "usd/gbp/jpy semi-annual",
+    "engine": "common.backtest",
+    "equity_futures_financing": "fed funds + spread",
+    "lev15_financing": "fed funds + futures spread",
+    "run_at": "2026-09-23T12:04:15",
+    "us_3m_basis": "bond-equivalent"
+  },
+  "ec_montecarlo.py": {
+    "coupons": "usd/gbp/jpy semi-annual",
+    "engine": "common.backtest",
+    "equity_futures_financing": "fed funds + spread",
+    "lev15_financing": "fed funds + futures spread",
+    "run_at": "2026-09-23T12:04:30",
+    "us_3m_basis": "bond-equivalent"
+  },
+  "ec_ntsd.py": {
+    "coupons": "usd/gbp/jpy semi-annual",
+    "engine": "common.backtest",
+    "equity_futures_financing": "fed funds + spread",
+    "lev15_financing": "fed funds + futures spread",
+    "run_at": "2026-09-23T12:04:45",
+    "us_3m_basis": "bond-equivalent"
+  },
+  "ec_validate.py": {
+    "coupons": "usd/gbp/jpy semi-annual",
+    "engine": "common.backtest",
+    "equity_futures_financing": "fed funds + spread",
+    "lev15_financing": "fed funds + futures spread",
+    "run_at": "2026-09-23T12:03:54",
+    "us_3m_basis": "bond-equivalent"
+  }
+}

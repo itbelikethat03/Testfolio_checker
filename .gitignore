@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local scratch/temp, if any ever lands in the repo by accident
+*.tmp
