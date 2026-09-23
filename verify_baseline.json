@@ -42,6 +42,8 @@
  "kd.scv.max_dd": -0.8895053111818321,
  "kd.scv.n": 26233.0,
  "kd.scv.sharpe": 0.5956293781096133,
+ "letf.SSO.hist_cagr": 0.12390087611044209,
+ "letf.UPRO.hist_cagr": 0.11988049306262671,
  "ntsd.synth.cagr": 0.11379024122584336,
  "ntsd.synth.maxdd": -0.7439939727402964,
  "ntsd.synth.vol": 0.24079421651428543,

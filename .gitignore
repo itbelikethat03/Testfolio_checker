@@ -4,3 +4,7 @@ __pycache__/
 
 # Local scratch/temp, if any ever lands in the repo by accident
 *.tmp
+
+# Obsidian per-machine UI state (the vault itself is versioned)
+context/.obsidian/workspace*.json
+context/.obsidian/cache

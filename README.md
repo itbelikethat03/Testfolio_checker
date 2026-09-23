@@ -36,7 +36,7 @@ python -m common.backtest "SPY:0.6,TLT:0.4" --rebal annual
 
 `name:weight` is a funded leg; a trailing `u` marks an unfunded (futures) leg, whose returns must be
 excess returns (the `*_FUT` assets). A negative `CASH` weight is a loan, charged the `--financing`
-preset's spread. Any name that is not in the registry is loaded as a Yahoo ticker. Output uses
+preset's borrowing rate (e.g. `broker` = fed funds + 1%, `letf` = 1.107 × fed funds + 0.43%). Any name that is not in the registry is loaded as a Yahoo ticker. Output uses
 testfolio's metric conventions (see `testfolio_check\VERIFY.md`).
 
 ## Configuration switches
@@ -85,7 +85,7 @@ testfolio_check:  tf_verify -> tf_compare
 dashboard:        build_data -> build_dashboard
 ```
 
-Context, reasoning, and caveats live in the Obsidian vault at `C:\Python Datoteke\context`.
+Context, reasoning, and caveats live in the Obsidian vault in `context\` (open it in Obsidian with *Open folder as vault*; start at `context\MOC.md`). It is part of the repo, so it syncs with the code.
 
 ## Moving this to another machine
 

@@ -242,7 +242,7 @@ Median CAGR is essentially scheme-invariant (within ~0.3pp across i.i.d., block-
 block-60). Financing cost is not: re-scoring the same block-20 paths under the
 `common/leverage.py` presets (borrowing at effective fed funds + a spread) moves full-Kelly
 median CAGR (market, X=0) from 14.81% to 13.16% (futures, + 0.30%), 11.88% (broker,
-+ 1.00%) and 11.43% (leveraged ETF, + 0.69% fitted, + 0.91% TER). See *Financing cost* below. **Tail risk is not scheme-invariant
++ 1.00%) and 11.19% (leveraged ETF: 1.107 × fed funds + 0.43%, fitted to SSO/UPRO, + 0.91% TER). See *Financing cost* below. **Tail risk is not scheme-invariant
 either.** P(drawdown < −90%) at full Kelly, market, X=0:
 
 * i.i.d. bootstrap: **20.1%**
@@ -495,16 +495,20 @@ agree; they span 0 to "never".
   were close after 2009. Before fed funds exists (1954) the gap is set to that 0.53pp
   average. CAGR change against frictionless borrowing, X = 0:
 
-  | | futures (+ 0.30%) | broker (+ 1.00%) | leveraged ETF (+ 0.69%, + 0.91% TER) |
+  | | futures (+ 0.30%) | broker (+ 1.00%) | leveraged ETF (1.107 × fed funds + 0.43%, + 0.91% TER) |
   |---|---:|---:|---:|
-  | Full Kelly, market | −1.65pp | −2.92pp | −3.38pp |
-  | Half Kelly, market | −0.31pp | −0.55pp | −1.45pp |
+  | Full Kelly, market | −1.65pp | −2.92pp | −3.63pp |
+  | Half Kelly, market | −0.31pp | −0.55pp | −1.50pp |
   | Quarter Kelly, market | 0 | 0 | −0.98pp (TER only) |
-  | Full Kelly, small value | −1.94pp | −3.44pp | −3.87pp |
+  | Full Kelly, small value | −1.94pp | −3.44pp | −4.16pp |
 
   Quarter Kelly never borrows, so only a fund's TER touches it. The LETF spread is not
-  assumed: `common/validate_leverage.py` fits it to live SSO and UPRO (0.69% over fed funds
-  for both, each matching its fund within 0.03pp/yr). The fed-funds benchmark rather than
+  assumed: `common/validate_leverage.py` fits `rate × fed funds + spread` to live SSO and UPRO
+  across rate regimes, giving 1.107 × fed funds + 0.43%. That matches every regime within
+  ~0.1pp/yr except 2020–21 (COVID-crash costs at ~0% rates, excluded from the fit), including
+  both 4%-rate windows. A flat spread over fed funds ran 0.2–0.4pp/yr too generous there, and
+  testfolio's SSOSIM/UPROSIM rule (≈ 1.27 × fed funds + 0.67%) 0.5–2pp/yr too punitive
+  (`testfolio_check/COMPARISON.md`). The fed-funds benchmark rather than
   the bill is chosen on evidence: SSO's fitted spread in 2006–08 is 0.95% over fed funds but
   1.48% over the bill, against 0.35–1.05% in the later regimes.
 - **Costs move the Kelly fraction, not the risk budget.** Phase 13 re-run with the same draws
@@ -512,8 +516,8 @@ agree; they span 0 to "never".
 
   | | frictionless | broker | leveraged ETF |
   |---|---:|---:|---:|
-  | Market f\* (analytic) | 2.62× | 2.12× | 2.22× |
-  | Small value f\* | 2.78× | 2.44× | 2.51× |
+  | Market f\* (analytic) | 2.62× | 2.12× | 2.17× |
+  | Small value f\* | 2.78× | 2.44× | 2.48× |
   | Market f_budget (P(DD ≤ −50%) ≤ 25%) | 0.9× | 0.9× | 0.9× |
   | Small value f_budget | 0.7× | 0.7× | 0.7× |
 
@@ -619,7 +623,7 @@ experiment happens to be the most vivid demonstration, not the largest source of
    its Kelly upward relative to what a fund could capture.
 3. Frictionless borrowing at the T-bill rate in the primary results. The futures, broker
    and leveraged-ETF financing presets (fed funds + spread) cut full-Kelly median CAGR by
-   ≈1.7, 2.9 and 3.4pp (market) and pull f\* from 2.62× down to 2.12–2.22×. See *Financing
+   ≈1.7, 2.9 and 3.6pp (market) and pull f\* from 2.62× down to 2.12–2.17×. See *Financing
    cost*.
 4. Block bootstrapping the reduced series introduces ~X seams; minor at X ≤ 200.
 5. Daily rebalancing is assumed throughout, matching the leveraged-ETF mechanics used
